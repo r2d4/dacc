@@ -1,0 +1,16 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "main": "tsx main.ts"
+  },
+  "dependencies": {
+    "dacc": "workspace:*",
+    "jest": "^29.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.1"
+  }
+}
