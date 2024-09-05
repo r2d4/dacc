@@ -1,0 +1,23 @@
+{
+	"name": "@dacc/workspace",
+	"author": "Matt Rickard <npm@matt-rickard.com>",
+	"private": true,
+	"scripts": {
+		"test": "jest",
+		"build": "pnpm run -r build",
+		"bump": "pnpm run -r bump",
+		"publish": "pnpm run -r publish"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.25.2",
+		"@babel/preset-env": "^7.25.4",
+		"@babel/preset-typescript": "^7.24.7",
+		"@changesets/cli": "^2.27.8",
+		"@jest/globals": "^29.7.0",
+		"babel-jest": "^29.7.0",
+		"jest": "^29.7.0",
+		"ts-jest": "^29.2.5",
+		"tsx": "^4.19.0",
+		"typescript": "^5.5.4"
+	}
+}

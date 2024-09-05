@@ -1,0 +1,913 @@
+[
+  {
+    "id": "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee",
+    "parents": [],
+    "data": {
+      "op": {
+        "source": {
+          "identifier": "docker-image://docker.io/library/alpine:3.20"
+        },
+        "platform": {
+          "OS": "linux",
+          "Architecture": "arm64"
+        },
+        "constraints": {}
+      },
+      "metadata": {
+        "caps": {
+          "source.image": true
+        },
+        "description": {
+          "llb.customname": "[from] alpine:3.20"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:5f004bfe9146b288e8459b2b887e08f0f996c1af93919e68416ed696df975382",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "apk add curl"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] apk add curl"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:db966fe748f47d3aae578640c964fc4e72a0f5dc4d93351efcfb41af000a8e16",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "apk add unzip"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] apk add unzip"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:11c0f34979888db57dbab5c70e9cf1847bef5f31efc3d0cc68d4c56f77be15eb",
+    "parents": [
+      "sha256:5f004bfe9146b288e8459b2b887e08f0f996c1af93919e68416ed696df975382",
+      "sha256:db966fe748f47d3aae578640c964fc4e72a0f5dc4d93351efcfb41af000a8e16"
+    ],
+    "data": {
+      "op": {
+        "merge": {
+          "inputs": [
+            {
+              "input": "0"
+            },
+            {
+              "input": "1"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[merge] [run] apk add curl, [run] apk add unzip"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:453247a2589edaae27f272e0b1dcbdf20ff5cfce87f507937e1c27323d53839d",
+    "parents": [],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "-1",
+              "secondaryInput": "-1",
+              "mkfile": {
+                "path": "/EOF",
+                "mode": 493,
+                "data": "Y3VybCAtT0wgaHR0cHM6Ly9naXRodWIuY29tL3Byb3RvY29sYnVmZmVycy9wcm90b2J1Zi9yZWxlYXNlcy9kb3dubG9hZC92MjguMC9wcm90b2MtMjguMC1saW51eC1hYXJjaF82NC56aXAKdW56aXAgcHJvdG9jLTI4LjAtbGludXgtYWFyY2hfNjQuemlwIC1kIC91c3IvbG9jYWw=",
+                "timestamp": "-1"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[internal] preparing inline document"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:24130ab53f6dd8bfe6ceedddc84655a00eec92da8917f833a0d15220ac1246d9",
+    "parents": [
+      "sha256:11c0f34979888db57dbab5c70e9cf1847bef5f31efc3d0cc68d4c56f77be15eb",
+      "sha256:453247a2589edaae27f272e0b1dcbdf20ff5cfce87f507937e1c27323d53839d"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "/dev/pipes/EOF"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "input": "1",
+              "selector": "/",
+              "dest": "/dev/pipes/",
+              "output": "-1",
+              "readonly": true
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[script] curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v28.0/protoc-28.0-linux-aarch_64.zip && unzip protoc-28.0-linux-aarch_64.zip -d /usr/local"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:43fe141490d71d75d9b788a958a44313ef29d3084082b2aa5d3fe08c6d2a941c",
+    "parents": [
+      "sha256:11c0f34979888db57dbab5c70e9cf1847bef5f31efc3d0cc68d4c56f77be15eb",
+      "sha256:24130ab53f6dd8bfe6ceedddc84655a00eec92da8917f833a0d15220ac1246d9"
+    ],
+    "data": {
+      "op": {
+        "diff": {
+          "lower": {
+            "input": "0"
+          },
+          "upper": {
+            "input": "1"
+          }
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[diff] [merge] [run] apk add curl, [run] apk add unzip, [script] curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v28.0/protoc-28.0-linux-aarch_64.zip && unzip protoc-28.0-linux-aarch_64.zip -d /usr/local"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:a2c62780ff6b64614f5fc464101360de5fd065455cb00f21003329682d22783b",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee"
+    ],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "0",
+              "secondaryInput": "-1",
+              "output": "0",
+              "mkdir": {
+                "path": "/app",
+                "mode": 493,
+                "makeParents": true,
+                "timestamp": "-1"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[workdir] /app"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:be53ebdae98003c37649e8fbbb04e4d325fd523de7141a0a27839da2c52636b2",
+    "parents": [
+      "sha256:a2c62780ff6b64614f5fc464101360de5fd065455cb00f21003329682d22783b"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "apk add git"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/app",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] apk add git"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:058bde2c4130b8e95ff1eb2fca9931ba9d2e1cc23a3edb3fa67e9883143ab6bc",
+    "parents": [
+      "sha256:be53ebdae98003c37649e8fbbb04e4d325fd523de7141a0a27839da2c52636b2"
+    ],
+    "data": {
+      "op": {
+        "merge": {
+          "inputs": [
+            {
+              "input": "0"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[merge] [run] apk add git"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:54bba393500c74b8e05476d2d49ae032bf38bd6b5f7bea379e992900603b631f",
+    "parents": [],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "-1",
+              "secondaryInput": "-1",
+              "mkfile": {
+                "path": "/EOF",
+                "mode": 493,
+                "data": "Z2l0IGNsb25lIC0tZGVwdGggMSBodHRwczovL2dpdGh1Yi5jb20vbW9ieS9idWlsZGtpdC5naXQgL2FwcC9naXRodWIuY29tL21vYnkvYnVpbGRraXQKbXYgL2FwcC9naXRodWIuY29tL21vYnkvYnVpbGRraXQvdmVuZG9yIC92ZW5kb3I=",
+                "timestamp": "-1"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[internal] preparing inline document"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:b8aab1ffa543d084cca0c8f987c9d02c64a90afd6874ab650b225fe6c60e0b05",
+    "parents": [
+      "sha256:058bde2c4130b8e95ff1eb2fca9931ba9d2e1cc23a3edb3fa67e9883143ab6bc",
+      "sha256:54bba393500c74b8e05476d2d49ae032bf38bd6b5f7bea379e992900603b631f"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "/dev/pipes/EOF"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "input": "1",
+              "selector": "/",
+              "dest": "/dev/pipes/",
+              "output": "-1",
+              "readonly": true
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[script] git clone --depth 1 https://github.com/moby/buildkit.git /app/github.com/moby/buildkit && mv /app/github.com/moby/buildkit/vendor /vendor"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:f5466e25c2b9958af5cb5d9be5f648f36d8c358db838cf8976cb13c6ed5c1e23",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "apk add nodejs"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/app",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] apk add nodejs"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:6323db41d6ed5c5a9c4e3eda1ae4a70082e961b4a3f1c8d16c9386f6ae52b904",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "apk add npm"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/app",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] apk add npm"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:de4c1da1ca3cc7be2bde4cc4366cd0a5bef3fcf2ecf95ce5c2be97fac7769bb4",
+    "parents": [
+      "sha256:f5466e25c2b9958af5cb5d9be5f648f36d8c358db838cf8976cb13c6ed5c1e23",
+      "sha256:6323db41d6ed5c5a9c4e3eda1ae4a70082e961b4a3f1c8d16c9386f6ae52b904"
+    ],
+    "data": {
+      "op": {
+        "merge": {
+          "inputs": [
+            {
+              "input": "0"
+            },
+            {
+              "input": "1"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[merge] [run] apk add nodejs, [run] apk add npm"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:9ccaacd5d5e1878df2b71a061853a2a5fe9a499d63272a7b5756dd1c060b8830",
+    "parents": [
+      "sha256:de4c1da1ca3cc7be2bde4cc4366cd0a5bef3fcf2ecf95ce5c2be97fac7769bb4"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "npm install -g ts-proto"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/app",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] npm install -g ts-proto"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:71a281ac4f46412e27e4ec4ed6402b661167330e160551bbd2c64a5338d1bd40",
+    "parents": [
+      "sha256:de4c1da1ca3cc7be2bde4cc4366cd0a5bef3fcf2ecf95ce5c2be97fac7769bb4"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "npm install -g @bufbuild/protoc-gen-es"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/app",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "mountType": "CACHE",
+              "input": "-1",
+              "output": "-1",
+              "dest": "/var/cache/apk",
+              "cacheOpt": {
+                "ID": "/var/cache/apk"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[run] npm install -g @bufbuild/protoc-gen-es"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:c47a98ba88bfbce01de1cfa47cfcce40f16bfb6dfa29f135e206004ac5a7a7a5",
+    "parents": [
+      "sha256:9ccaacd5d5e1878df2b71a061853a2a5fe9a499d63272a7b5756dd1c060b8830",
+      "sha256:71a281ac4f46412e27e4ec4ed6402b661167330e160551bbd2c64a5338d1bd40"
+    ],
+    "data": {
+      "op": {
+        "merge": {
+          "inputs": [
+            {
+              "input": "0"
+            },
+            {
+              "input": "1"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[merge] [run] npm install -g ts-proto, [run] npm install -g @bufbuild/protoc-gen-es"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:5aec0262b8ab8f6e36f5ef5acfcc887f9d58c3738dd6fe0df6ce636fe578514d",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee",
+      "sha256:43fe141490d71d75d9b788a958a44313ef29d3084082b2aa5d3fe08c6d2a941c"
+    ],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "0",
+              "secondaryInput": "1",
+              "output": "0",
+              "copy": {
+                "src": "/",
+                "dest": "/",
+                "mode": -1,
+                "timestamp": "-1",
+                "createDestPath": true,
+                "allowEmptyWildcard": true,
+                "dirCopyContents": true,
+                "followSymlink": true,
+                "allowWildcard": true
+              }
+            }
+          ]
+        },
+        "constraints": {}
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[copy] src=/ dest=/"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:4152508c336c74ca61a50d0abcd536d2f24b70c453a9c6f27d9b7d8f0f725bf8",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee",
+      "sha256:b8aab1ffa543d084cca0c8f987c9d02c64a90afd6874ab650b225fe6c60e0b05"
+    ],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "0",
+              "secondaryInput": "1",
+              "output": "0",
+              "copy": {
+                "src": "/app",
+                "dest": "/app",
+                "mode": -1,
+                "timestamp": "-1",
+                "createDestPath": true,
+                "allowEmptyWildcard": true,
+                "dirCopyContents": true,
+                "followSymlink": true,
+                "allowWildcard": true
+              }
+            }
+          ]
+        },
+        "constraints": {}
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[copy] src=/app dest=/app"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:e24003be50885af187bb4af36bcea74bb0adb4865bbd704a632792344b60fec0",
+    "parents": [
+      "sha256:494107b5cd51a46258ca6c2eedca16be582818371796e40144a614d17476d6ee",
+      "sha256:b8aab1ffa543d084cca0c8f987c9d02c64a90afd6874ab650b225fe6c60e0b05"
+    ],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "0",
+              "secondaryInput": "1",
+              "output": "0",
+              "copy": {
+                "src": "/vendor",
+                "dest": "/vendor",
+                "mode": -1,
+                "timestamp": "-1",
+                "createDestPath": true,
+                "allowEmptyWildcard": true,
+                "dirCopyContents": true,
+                "followSymlink": true,
+                "allowWildcard": true
+              }
+            }
+          ]
+        },
+        "constraints": {}
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[copy] src=/vendor dest=/vendor"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:b87ec1ecea7d5ceaa1b265b787762b026ef6195f95a9ae640f8b35106cb2500a",
+    "parents": [
+      "sha256:c47a98ba88bfbce01de1cfa47cfcce40f16bfb6dfa29f135e206004ac5a7a7a5",
+      "sha256:5aec0262b8ab8f6e36f5ef5acfcc887f9d58c3738dd6fe0df6ce636fe578514d",
+      "sha256:4152508c336c74ca61a50d0abcd536d2f24b70c453a9c6f27d9b7d8f0f725bf8",
+      "sha256:e24003be50885af187bb4af36bcea74bb0adb4865bbd704a632792344b60fec0"
+    ],
+    "data": {
+      "op": {
+        "merge": {
+          "inputs": [
+            {
+              "input": "0"
+            },
+            {
+              "input": "1"
+            },
+            {
+              "input": "2"
+            },
+            {
+              "input": "3"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[merge] [merge] [run] npm install -g ts-proto, [run] npm install -g @bufbuild/protoc-gen-es, [copy] src=/ dest=/, [copy] src=/app dest=/app, [copy] src=/vendor dest=/vendor"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:de3254b4c34811f609060b6cd2ec5d375e0adf1ddc547c53427231d3125f1ea6",
+    "parents": [],
+    "data": {
+      "op": {
+        "file": {
+          "actions": [
+            {
+              "input": "-1",
+              "secondaryInput": "-1",
+              "mkfile": {
+                "path": "/EOF",
+                "mode": 493,
+                "data": "c2V0IC1lCm1rZGlyIC1wIC9hcHAvb3V0L2VzCnByb3RvYyAtSS9hcHAvIC1JL3ZlbmRvciAtLWVzX291dD0vYXBwL291dC9lcyAtLWVzX29wdD10YXJnZXQ9dHMgLS1lc19vcHQ9anNvbl90eXBlcz10cnVlICQoZmluZCAvYXBwL2dpdGh1Yi5jb20vbW9ieS9idWlsZGtpdCAtbmFtZSAib3BzLnByb3RvIiAtcHJpbnQpIGdpdGh1Yi5jb20vZ29nby9wcm90b2J1Zi9nb2dvcHJvdG8vZ29nby5wcm90bw==",
+                "timestamp": "-1"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "caps": {
+          "file.base": true
+        },
+        "description": {
+          "llb.customname": "[internal] preparing inline document"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:1083697ecb0759f9fefacef98b26365662e74a88d1d804b03c98d8d351c945e3",
+    "parents": [
+      "sha256:b87ec1ecea7d5ceaa1b265b787762b026ef6195f95a9ae640f8b35106cb2500a",
+      "sha256:de3254b4c34811f609060b6cd2ec5d375e0adf1ddc547c53427231d3125f1ea6"
+    ],
+    "data": {
+      "op": {
+        "exec": {
+          "meta": {
+            "args": [
+              "/bin/sh",
+              "-c",
+              "/dev/pipes/EOF"
+            ],
+            "env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "cwd": "/",
+            "removeMountStubsRecursive": true
+          },
+          "mounts": [
+            {
+              "input": "0",
+              "output": "0",
+              "dest": "/"
+            },
+            {
+              "input": "1",
+              "selector": "/",
+              "dest": "/dev/pipes/",
+              "output": "-1",
+              "readonly": true
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[script] set -e && mkdir -p /app/out/es && protoc -I/app/ -I/vendor --es_out=/app/out/es --es_opt=target=ts --es_opt=json_types=true $(find /app/github.com/moby/buildkit -name \"ops.proto\" -print) github.com/gogo/protobuf/gogoproto/gogo.proto"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:ffc8108471f23610435b60798afbebdac8e40715b9da9e7e0843cd0202b4f150",
+    "parents": [
+      "sha256:b87ec1ecea7d5ceaa1b265b787762b026ef6195f95a9ae640f8b35106cb2500a",
+      "sha256:1083697ecb0759f9fefacef98b26365662e74a88d1d804b03c98d8d351c945e3"
+    ],
+    "data": {
+      "op": {
+        "diff": {
+          "lower": {
+            "input": "0"
+          },
+          "upper": {
+            "input": "1"
+          }
+        }
+      },
+      "metadata": {
+        "description": {
+          "llb.customname": "[diff] [merge] [merge] [run] npm install -g ts-proto, [run] npm install -g @bufbuild/protoc-gen-es, [copy] src=/ dest=/, [copy] src=/app dest=/app, [copy] src=/vendor dest=/vendor, [script] set -e && mkdir -p /app/out/es && protoc -I/app/ -I/vendor --es_out=/app/out/es --es_opt=target=ts --es_opt=json_types=true $(find /app/github.com/moby/buildkit -name \"ops.proto\" -print) github.com/gogo/protobuf/gogoproto/gogo.proto"
+        }
+      }
+    }
+  },
+  {
+    "id": "sha256:3996db1a3a16cca39129a034d82b0aaa6dd87991aa713458e168e40a7e143c70",
+    "parents": [
+      "sha256:ffc8108471f23610435b60798afbebdac8e40715b9da9e7e0843cd0202b4f150"
+    ],
+    "data": {
+      "metadata": {
+        "caps": {
+          "constraints": true,
+          "platform": true,
+          "meta.description": true
+        }
+      }
+    }
+  }
+]

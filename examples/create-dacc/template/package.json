@@ -1,0 +1,23 @@
+{
+    "name": "dacc-app",
+    "version": "1.0.0",
+    "description": "A dacc app created with create-dacc",
+    "type": "module",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsx src/main"
+    },
+    "keywords": [
+        "dacc"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "dacc": "^0.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.5.1",
+        "typescript": "^5.5.4",
+        "tsx": "^4.19.0"
+    }
+}
