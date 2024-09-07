@@ -1,9 +1,9 @@
 import { arch } from 'os';
 import * as path from 'path';
 import { split } from 'shlex';
-import { PlatformJson } from '../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
-import { CapID, ContextIdentifier, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from './constants';
-import { BKNodeData, BKOp, DataNode } from './graph/bk';
+import { PlatformJson } from '../../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
+import { CapID, ContextIdentifier, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from '../common/constants';
+import { BKNodeData, BKOp, DataNode } from '../graph/bk';
 
 export type OpOption = (op?: BKOp) => BKOp | undefined;
 

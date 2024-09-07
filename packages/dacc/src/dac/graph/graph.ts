@@ -29,7 +29,7 @@ class Graph<T extends Node> {
         return g;
     }
 
-    toJSON(): any {
+    toJSON(): T[] {
         return [...this._nodes.values()]
     }
 
@@ -127,3 +127,4 @@ export type GraphDotConfig<T extends Node> = {
 
 
 export { Graph, Node };
+

@@ -1,11 +1,11 @@
 import { toBinary } from "@bufbuild/protobuf";
 import { DefinitionSchema, PlatformJson } from '../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
-import { DockerBuildClient, DockerBuildOptions, DockerRunOptions } from "./client";
-import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./constants";
-import { Digest } from "./digest";
+import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
+import { Digest } from "./common/digest";
+import { DockerBuildClient, DockerBuildOptions, DockerRunOptions } from "./docker/client";
 import { BKGraph, BKNode, BKNodeData, DataNode } from "./graph/bk";
 import { Graph, GraphDotConfig } from "./graph/graph";
-import { contextNode, copy, diff, from, getArch, mkFile, nested, OpOption, run, workdir } from "./ops";
+import { contextNode, copy, diff, from, getArch, mkFile, nested, OpOption, run, workdir } from "./patterns/ops";
 
 export type StateProps = {
     /**
@@ -307,7 +307,7 @@ export class State implements IState {
         return this.output(node).toConfig();
     }
 
-    toJSON(node?: StateNode): any {
+    toJSON(node?: StateNode): StateNode[] {
         return this.output(node).toJSON();
     }
 

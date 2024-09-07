@@ -1,16 +1,12 @@
 import { create, fromJson, toBinary } from '@bufbuild/protobuf';
 import { v4 as uuidv4 } from 'uuid';
-import { Definition, DefinitionSchema, InputSchema, Op, OpJson, OpMetadata, OpMetadataJson, OpMetadataSchema, OpSchema } from '../../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
-import { MetadataDescriptionKey } from '../constants';
-import { Digest } from '../digest';
+import { Definition, DefinitionSchema, InputSchema, Op, OpJson, OpMetadata, OpMetadataJson, OpMetadataSchema, OpSchema } from '../../generated/github.com/moby/buildkit/solver/pb/ops_pb';
+import { MetadataDescriptionKey } from '../common/constants';
+import { Digest } from '../common/digest';
 import { Graph, GraphDotConfig, Node } from './graph';
 
-class DataNode<T> {
+class DataNode<T> implements Node {
     constructor(readonly parents: string[], public data: T, readonly id: string = uuidv4()) { }
-
-    clone(): DataNode<T> {
-        return new DataNode(this.parents, this.data, this.id);
-    }
 }
 
 type BKNodeData = {
@@ -20,7 +16,11 @@ type BKNodeData = {
 
 type BKOp = Omit<OpJson, "inputs">
 
-class BKNode implements Node {
+/**
+ * BKNode is a node in a BuildKit graph.
+ * The id is the digest of the OpSchema protobuf message.
+ */
+class BKNode implements DataNode<BKNodeData> {
     readonly id: string;
     constructor(readonly parents: string[], public data: BKNodeData) {
         this.id = this.digest().toString();
@@ -46,8 +46,10 @@ class BKNode implements Node {
     }
 }
 
-
-
+/**
+ * BKGraph is a graph of BuildKit nodes.
+ * The graph is a directed acyclic graph.
+ */
 class BKGraph extends Graph<BKNode> {
     private buildImage: string = "ghcr.io/r2d4/llb:1.0.1"
 
