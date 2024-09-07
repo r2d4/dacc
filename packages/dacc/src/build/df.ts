@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { cacheMount } from "../dac/patterns/op";
 import { State } from "../dac/state";
 
@@ -68,11 +67,6 @@ async function main() {
         node: protoOut,
         output: ["src/generated"]
     })
-
-    // log the build artifacts in ../../example/exported-files
-    fs.writeFileSync("../../examples/exported-files/df.dacc", root.toConfig())
-    fs.writeFileSync("../../examples/exported-files/df.json", JSON.stringify(root.toJSON(), null, 2))
-    fs.writeFileSync("../../examples/exported-files/df.dot", root.toDot())
 }
 
 void main();

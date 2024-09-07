@@ -29,6 +29,11 @@ const defaultStateProps: Required<StateProps> = {
 };
 
 /**
+ * Represents a node in the build graph.
+ */
+export class StateNode extends DataNode<BKNodeData> { }
+
+/**
  * Represents an empty build context in a Docker build process.
  * 
  * This constant is used to indicate a "scratch" or completely empty starting 
@@ -53,7 +58,7 @@ export interface IState {
      * @param opts - Options for the Docker build process.
      * @returns A Promise that resolves to the tag of the built image.
      */
-    buildImage(opts?: DockerBuildOptions & { node?: DataNode<BKNodeData> }): Promise<string>;
+    buildImage(opts?: DockerBuildOptions & { node?: StateNode }): Promise<string>;
 
     /**
      * Builds and runs a Docker image from the current state.
@@ -61,13 +66,13 @@ export interface IState {
      */
     runImage(opts?: {
         run?: DockerRunOptions,
-        build?: DockerBuildOptions & { node?: DataNode<BKNodeData> }
+        build?: DockerBuildOptions & { node?: StateNode }
     }): Promise<void>;
 
     /**
      * The current head node of the build graph.
      */
-    current: DataNode<BKNodeData> | undefined;
+    current: StateNode | undefined;
 
     /**
      * Creates a deep copy of the current State.
@@ -81,14 +86,14 @@ export interface IState {
      * @param node - The node to use as the output. If not provided, uses the current head.
      * @returns The BuildKit configuration as a string.
      */
-    toConfig(node?: DataNode<BKNodeData>): string;
+    toConfig(node?: StateNode): string;
 
     /**
      * Converts the current state to a JSON representation.
      * @param node - The node to use as the output. If not provided, uses the current head.
      * @returns The JSON representation of the state.
      */
-    toJSON(node?: DataNode<BKNodeData>): any;
+    toJSON(node?: StateNode): any;
 
     /**
     * Generates a DOT graph representation of the current state.
@@ -96,7 +101,7 @@ export interface IState {
     * @param config - Configuration options for the DOT graph generation.
     * @returns The DOT graph representation as a string.
     */
-    toDot(node?: DataNode<BKNodeData>, config?: GraphDotConfig<BKNode>): string;
+    toDot(node?: StateNode, config?: GraphDotConfig<BKNode>): string;
 
     /**
     * Applies a state operation to the current state.
@@ -113,7 +118,7 @@ export interface IState {
      * @param setHead - Whether to set the new node as the head. Defaults to true.
      * @returns The current State instance.
      */
-    add(node: DataNode<BKNodeData>, setHead?: boolean): IState;
+    add(node: StateNode, setHead?: boolean): IState;
 
     /**
      * Adds a new 'FROM' instruction to the build graph.
@@ -134,14 +139,14 @@ export interface IState {
       * @param ops - The operations to execute in parallel.
       * @returns An array of the resulting nodes from each parallel operation.
       */
-    parallel(...ops: StateOp[]): DataNode<BKNodeData>[];
+    parallel(...ops: StateOp[]): StateNode[];
 
     /**
      * Creates a new branch in the build graph.
      * @param node - The node to set as the head of the new branch. If not provided, creates a new branch from the current head.
      * @returns The current State instance.
      */
-    branch(node?: DataNode<BKNodeData>): IState;
+    branch(node?: StateNode): IState;
 
     /**
     * Sets an environment variable for subsequent operations.
@@ -179,7 +184,7 @@ export interface IState {
      * @param inputs - The nodes to merge.
      * @returns The current State instance.
      */
-    merge(inputs: DataNode<BKNodeData>[]): IState;
+    merge(inputs: StateNode[]): IState;
 
     /**
      * Computes the difference between the current state and the state after applying an operation.
@@ -195,7 +200,7 @@ export interface IState {
      * @param from - The source node to copy from. If not provided, uses the current context.
      * @returns The current State instance.
      */
-    copy(src: string[] | string, dest: string, from?: DataNode<BKNodeData>): IState;
+    copy(src: string[] | string, dest: string, from?: StateNode): IState;
 
     /**
     * Applies one or more operation options to the current head node.
@@ -213,9 +218,9 @@ export class State implements IState {
     private _cwd: string = "/";
     private _env: Map<string, string> = new Map(Object.entries(DefaultLinuxEnv));
 
-    private context: DataNode<BKNodeData> | null;
-    private g: Graph<DataNode<BKNodeData>> = new Graph<DataNode<BKNodeData>>();
-    private head?: DataNode<BKNodeData>;
+    private context: StateNode | null;
+    private g: Graph<StateNode> = new Graph<StateNode>();
+    private head?: StateNode;
 
     /**
     * Creates a new State instance.
@@ -227,7 +232,7 @@ export class State implements IState {
     }
 
 
-    async buildImage(opts: DockerBuildOptions & { node?: DataNode<BKNodeData> } = {}): Promise<string> {
+    async buildImage(opts: DockerBuildOptions & { node?: StateNode } = {}): Promise<string> {
         const config = this.toConfig(opts.node);
         const tag = `dacc-${Digest.create("sha256", new TextEncoder().encode(config)).toHex().slice(0, 8)}`;
         console.log(`Building image with tag ${tag}`);
@@ -241,14 +246,14 @@ export class State implements IState {
 
     async runImage(opts?: {
         run?: DockerRunOptions,
-        build?: DockerBuildOptions & { node?: DataNode<BKNodeData> }
+        build?: DockerBuildOptions & { node?: StateNode }
     }): Promise<void> {
         return this.buildImage(opts?.build).then((image) => {
             this.client.run(image, opts?.run);
         })
     }
 
-    get current(): DataNode<BKNodeData> | undefined {
+    get current(): StateNode | undefined {
         return this.head;
     }
 
@@ -267,7 +272,7 @@ export class State implements IState {
 
     from(identifier: string, platform?: PlatformJson): State {
         if (!platform) platform = this.platform;
-        const node = new DataNode<BKNodeData>([], from(identifier, platform));
+        const node = new StateNode([], from(identifier, platform));
         this.platform = platform || this.platform;
         this.add(node);
         return this;
@@ -279,12 +284,12 @@ export class State implements IState {
         return this;
     }
 
-    branch(node?: DataNode<BKNodeData>): State {
+    branch(node?: StateNode): State {
         this.head = node;
         return this;
     }
 
-    parallel(...ops: StateOp[]): DataNode<BKNodeData>[] {
+    parallel(...ops: StateOp[]): StateNode[] {
         const originalHead = this.head;
         const resultNodes = ops.map(op => this.executeAndReturn(op));
         this.head = originalHead;
@@ -293,20 +298,20 @@ export class State implements IState {
 
     nested(other: State): State {
         const def = Buffer.from(toBinary(DefinitionSchema, other.output().toDefinition())).toString('base64');
-        const mnt = this.add(new DataNode<BKNodeData>([], mkFile(`/${LLBDefinitionFilename}`, def)))
+        const mnt = this.add(new StateNode([], mkFile(`/${LLBDefinitionFilename}`, def)))
         const parents = this.head ? [mnt.head!.id, this.head.id] : [mnt.head!.id];
-        return this.add(new DataNode<BKNodeData>(parents, nested()))
+        return this.add(new StateNode(parents, nested()))
     }
 
-    toConfig(node?: DataNode<BKNodeData>): string {
+    toConfig(node?: StateNode): string {
         return this.output(node).toConfig();
     }
 
-    toJSON(node?: DataNode<BKNodeData>): any {
+    toJSON(node?: StateNode): any {
         return this.output(node).toJSON();
     }
 
-    toDot(node?: DataNode<BKNodeData>, config?: GraphDotConfig<BKNode>): string {
+    toDot(node?: StateNode, config?: GraphDotConfig<BKNode>): string {
         return this.output(node).toDot(config);
     }
 
@@ -315,7 +320,7 @@ export class State implements IState {
         return this;
     }
 
-    add(node: DataNode<BKNodeData>, setHead: boolean = true): State {
+    add(node: StateNode, setHead: boolean = true): State {
         this.g.add(node);
         if (setHead) this.head = node;
         return this;
@@ -325,14 +330,14 @@ export class State implements IState {
         this._cwd = path;
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
-        this.add(new DataNode<BKNodeData>(Array.from(parents), workdir(path)))
+        this.add(new StateNode(Array.from(parents), workdir(path)))
         return this;
     }
 
     run(command: string): State {
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
-        this.add(new DataNode<BKNodeData>(Array.from(parents), run(command, this._env, this._cwd)));
+        this.add(new StateNode(Array.from(parents), run(command, this._env, this._cwd)));
         return this;
     }
 
@@ -340,7 +345,7 @@ export class State implements IState {
         if (typeof script === "string") script = [script];
         script = script.map(s => s.trim().replace(/\t/g, " "));
         const mkFileOp = mkFile("/EOF", Buffer.from(script.join("\n")).toString("base64"));
-        const mkFileNode = new DataNode<BKNodeData>([], mkFileOp);
+        const mkFileNode = new StateNode([], mkFileOp);
         this.add(mkFileNode, false);
         const runOp = run("/dev/pipes/EOF", this._env, "/");
         runOp.op?.exec?.mounts?.push({
@@ -357,13 +362,13 @@ export class State implements IState {
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
         parents.add(mkFileNode.id);
-        this.add(new DataNode<BKNodeData>(Array.from(parents), runOp));
+        this.add(new StateNode(Array.from(parents), runOp));
         return this
     }
 
-    merge(inputs: DataNode<BKNodeData>[]): State {
+    merge(inputs: StateNode[]): State {
         const parents = inputs.map(i => i.id);
-        const node = new DataNode<BKNodeData>(parents, {
+        const node = new StateNode(parents, {
             op: {
                 merge: {
                     inputs: parents.map((_, index) => ({ input: index.toString() })),
@@ -391,7 +396,7 @@ export class State implements IState {
         return this;
     }
 
-    copy(src: string[] | string, dest: string, from?: DataNode<BKNodeData>): State {
+    copy(src: string[] | string, dest: string, from?: StateNode): State {
         if (typeof src === "string") src = [src];
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
@@ -403,12 +408,12 @@ export class State implements IState {
         }
         const input = this.head ? 0 : -1;
         const secondaryInput = parents.size - 1;
-        const node = new DataNode<BKNodeData>(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size))
+        const node = new StateNode(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size))
         this.add(node);
         return this;
     }
 
-    private executeAndReturn(op: StateOp): DataNode<BKNodeData> {
+    private executeAndReturn(op: StateOp): StateNode {
         const originalHead = this.head;
         op(this);
         const resultNode = this.head;
@@ -416,11 +421,11 @@ export class State implements IState {
         return resultNode!;
     }
 
-    private output(node?: DataNode<BKNodeData>): BKGraph {
+    private output(node?: StateNode): BKGraph {
         const outputNode = node || this.head;
         const c = this.g.copy();
         if (!outputNode) throw new Error("No output node found")
-        c.add(new DataNode<BKNodeData>([outputNode.id], {
+        c.add(new StateNode([outputNode.id], {
             metadata: {
                 caps: {
                     [CapID.Constraints]: true,
@@ -433,16 +438,16 @@ export class State implements IState {
         return bk;
     }
 
-    private updateContext(paths: string[]): DataNode<BKNodeData> {
+    private updateContext(paths: string[]): StateNode {
         if (!this.context) {
-            this.context = new DataNode<BKNodeData>([], contextNode(paths));
+            this.context = new StateNode([], contextNode(paths));
             this.add(this.context, false);
             return this.context;
         }
         const existingPaths = JSON.parse(this.context.data.op?.source?.attrs?.[OpAttr.FollowPaths] || "[]");
         const pathSet = new Set<string>(existingPaths);
         paths.forEach(p => pathSet.add(p));
-        const newContext = new DataNode<BKNodeData>([], contextNode(Array.from(pathSet)), this.context.id);
+        const newContext = new StateNode([], contextNode(Array.from(pathSet)), this.context.id);
         this.g.update(newContext.id, newContext);
         this.context = newContext;
         return newContext;

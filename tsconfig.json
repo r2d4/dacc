@@ -24,10 +24,7 @@
             "@dacc/*": [
                 "./packages/*/src"
             ]
-        },
-        "types": [
-            "node"
-        ],
+        }
     },
     "include": [
         "packages/**/*.ts",

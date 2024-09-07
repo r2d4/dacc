@@ -1,48 +1,66 @@
 ---
 sidebar_position: 1
 slug: /
+title: Getting Started
 ---
+# dacc: docker-as-code compiler
 
-# Getting Started
+### _Cache-efficient, sandboxed, builds as code._
 
-Let's discover **Docusaurus in less than 5 minutes**.
+* Define your builds in code, not Dockerfiles
+* Support for merge, diff, and nested builds
+* Complete control over the  build graph
+* Works natively with Docker, no extra tools
+* Built on the Buildkit low-level build (LLB) API ([r2d4/llb](https://github.com/r2d4/llb))
 
-## Getting Started
-
-Get started by **creating a new site**.
-
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
-
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+### Installation
+__dacc__ requires [Docker](https://www.docker.com).
+```
+npm install dacc
+```
+### Getting Started - Hello World
+Create a new project with the `create-dacc`, which will create a new TypeScript project and install dacc in the directory provided.
+```
+npx create-dacc hello-dacc
+```
+Enter the newly created directory and run the build
+```
+cd hello-dacc && npm run build
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+```typescript main.ts
+import { State } from 'dacc'
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+async function main() {
+    new State().from("alpine")
+        .run("echo Hello, World! > /hello.txt")
+        .runImage({ run: { command: "cat", args: ["/hello.txt"] } })
+}
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
+void main()
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+```bash
+ $ npm run build
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+> dacc-npx@1.0.0 build
+> tsx src/main
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+Building image with tag dacc-a1fb0f8c
+[+] Building 0.1s (7/7) FINISHED                                                                                                                          docker:desktop-linux
+ => [internal] load build definition from Dockerfile                                                                                                                      0.0s
+ => => transferring dockerfile: 1.10kB                                                                                                                                    0.0s
+ => resolve image config for docker-image://ghcr.io/r2d4/llb:1.0.1                                                                                                        0.0s
+ => docker-image://ghcr.io/r2d4/llb:1.0.1                                                                                                                          0.0s
+ => llb-json-api                                                                                                                                                          0.0s
+ => => transferring dockerfile: 1.10kB                                                                                                                                    0.0s
+ => [from] alpine                                                                                                                                                         0.0s
+ => [run] echo Hello, World! > /hello.txt                                                                                                                          0.0s
+ => exporting to image                                                                                                                                                    0.0s
+ => => exporting layers                                                                                                                                                   0.0s
+ => => writing image sha256:6e63d7fc63b7b8022ba41ececc5dde119d7bff5b0d6fc16008fe2b19c7e23f8d                                                                              0.0s
+ => => naming to docker.io/library/dacc-a1fb0f8c                                                                                                                          0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qj27d9ecmb43wlsr9y4oddx4b
+Hello, World!
+```

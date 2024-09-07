@@ -39,7 +39,7 @@ importers:
         specifier: ^5.5.4
         version: 5.5.4
 
-  examples/create-dacc:
+  packages/create-dacc:
     dependencies:
       fs-extra:
         specifier: ^10.0.0
@@ -68,7 +68,7 @@ importers:
         version: 14.18.63
       dacc:
         specifier: workspace:*
-        version: link:../../packages/dacc
+        version: link:../dacc
       rollup:
         specifier: ^4.21.2
         version: 4.21.2
@@ -8413,16 +8413,16 @@ snapshots:
 
   '@types/fs-extra@8.1.5':
     dependencies:
-      '@types/node': 14.18.63
+      '@types/node': 22.5.1
 
   '@types/fs-extra@9.0.13':
     dependencies:
-      '@types/node': 14.18.63
+      '@types/node': 22.5.1
 
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 14.18.63
+      '@types/node': 22.5.1
 
   '@types/graceful-fs@4.1.9':
     dependencies:
