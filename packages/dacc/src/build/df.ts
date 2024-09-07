@@ -8,7 +8,7 @@ async function main() {
     // this is useful for creating explicit edges between nodes
     // we will use this to do the equivalent of "multi-stage" builds
     // and later to do COPY --from
-    const base = root.from("alpine:3.20",).current
+    const base = root.from("alpine:3.20").current
 
     const workdir = "/app"
     const apkCache = "/var/cache/apk"

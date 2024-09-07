@@ -33,17 +33,17 @@ import { cacheMount, State } from 'dacc'
 async function main() {
     const s = new State()
 
-    const pkgs = ["git", "curl", "wget"]
+    const bins = ["git", "curl", "wget"]
 
     s.from("alpine").merge(
         s.parallel(
-            ...pkgs.map(bin => (s: State) =>
+            ...bins.map(bin => (s: State) =>
                 s.run(`apk add ${bin}`).with(cacheMount("/var/cache/apk")))
         ),
     )
 
     s.runImage({
-        run: { command: "ls", args: pkgs.map(bin => `/usr/bin/${bin}`) },
+        run: { command: "ls", args: bins.map(bin => `/usr/bin/${bin}`) },
     })
 }
 
@@ -60,7 +60,20 @@ Running it for the first time takes 1.8s.
  => [merge] [run] apk add git, [run] apk add curl, [run] apk add wget                                             0.2s
  ...
  ```
- Now add another package to the list
- ```
-const bins = ["git", "curl", "wget"]
+ Now add another package to the list and re-run the build
+ ```typescript
+const bins = ["git", "curl", "wget", "jq"]
+```
 
+```
+[+] Building 0.7s (11/11) FINISHED
+...
+ => CACHED [from] alpine                                                                                          0.0s
+ => [run] apk add jq                                                                                              0.4s
+ => CACHED [run] apk add git                                                                                      0.0s
+ => CACHED [run] apk add curl                                                                                     0.0s
+ => CACHED [run] apk add wget                                                                                     0.0s
+ => [merge] [run] apk add git, [run] apk add curl, [run] apk add wget, [run] apk add jq                           0.2s
+ ...
+ ```
+The original packages are still cached, and the build only downloads the new package.
