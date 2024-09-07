@@ -1,5 +1,5 @@
 import { toBinary } from "@bufbuild/protobuf";
-import { DefinitionSchema, PlatformJson } from '../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
+import { DefinitionSchema, PlatformJson } from '../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
 import { Digest } from "./common/digest";
 import { DockerBuildClient, DockerBuildOptions, DockerRunOptions } from "./docker/client";
@@ -238,8 +238,7 @@ export class State implements IState {
         console.log(`Building image with tag ${tag}`);
         opts.tag = opts.tag || [];
         opts.tag.push(tag);
-
-        return new Promise<string>((resolve) => this.client.build(config, '.', {
+        return new Promise<string>((resolve) => this.client.build(config, opts.contextPath, {
             ...opts,
         }).then(() => resolve(tag)))
     }
@@ -408,8 +407,9 @@ export class State implements IState {
         }
         const input = this.head ? 0 : -1;
         const secondaryInput = parents.size - 1;
-        const node = new StateNode(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size))
+        const node = new StateNode(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size, this._cwd))
         this.add(node);
+        console.log(JSON.stringify(this, null, 2))
         return this;
     }
 

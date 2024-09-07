@@ -1,7 +1,7 @@
 import { arch } from 'os';
 import * as path from 'path';
 import { split } from 'shlex';
-import { PlatformJson } from '../../generated/es/github.com/moby/buildkit/solver/pb/ops_pb';
+import { PlatformJson } from '../../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, ContextIdentifier, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from '../common/constants';
 import { BKNodeData, BKOp, DataNode } from '../graph/bk';
 
@@ -65,7 +65,7 @@ export function diff(lower: DataNode<BKNodeData>, upper: DataNode<BKNodeData>): 
 
 
 
-export function copy(src: string | string[], dest: string, initialInput: number, secondaryInput: number, inputs: number): BKNodeData {
+export function copy(src: string | string[], dest: string, initialInput: number, secondaryInput: number, inputs: number, cwd: string): BKNodeData {
     const srcs = Array.isArray(src) ? src : [src];
     return {
         op: {
@@ -76,7 +76,7 @@ export function copy(src: string | string[], dest: string, initialInput: number,
                     output: (index === srcs.length - 1 ? 0 : -1).toString(),
                     copy: {
                         src: path.resolve("/", src),
-                        dest: path.resolve(dest),
+                        dest: path.resolve("/", cwd, dest),
                         mode: -1,
                         timestamp: "-1",
                         createDestPath: true,

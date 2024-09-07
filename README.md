@@ -2,11 +2,10 @@
 
 ### _Cache-efficient, sandboxed, builds as code._
 
-* Define your builds in code, not Dockerfiles
-* Support for [__merge__](examples/merge.ts), [__diff__](examples/diff.ts), and [__nested builds__](examples/nested-builds.ts)
-* Complete control over the  build graph
-* Works natively with Docker, no extra tools
-* Built on the Buildkit low-level build (LLB) API ([r2d4/llb](https://github.com/r2d4/llb))
+* <ins>Native</ins> support with any Docker installation, no extra tools needed
+* <ins>Infrastructure-as-code</ins> for docker images
+* <ins>Cache-efficient</ins>: Represent any build graph in dacc
+* <ins>Extend</ins>: [__merge__](examples/merge.ts), [__diff__](examples/diff.ts), and [__nested builds__](examples/nested-builds.ts) operations
 
 ### Installation
 __dacc__ requires [Docker](https://www.docker.com).
@@ -23,44 +22,45 @@ Enter the newly created directory and run the build
 cd hello-dacc && npm run build
 ```
 
+### Merging / Parallelism
+Docker images often have to install packages via a package manager. This might be specified in a single command `RUN apk add git curl wget`. But when a new package is added, the entire cache is invalidated.
+
+Instead, with dacc, you can install them in parallel and then merge the resulting filesystems.
+
 ```typescript main.ts
-import { State } from 'dacc'
+import { cacheMount, State } from 'dacc'
 
 async function main() {
-    new State().from("alpine")
-        .run("echo Hello, World! > /hello.txt")
-        .runImage({ run: { command: "cat", args: ["/hello.txt"] } })
+    const s = new State()
+
+    const pkgs = ["git", "curl", "wget"]
+
+    s.from("alpine").merge(
+        s.parallel(
+            ...pkgs.map(bin => (s: State) =>
+                s.run(`apk add ${bin}`).with(cacheMount("/var/cache/apk")))
+        ),
+    )
+
+    s.runImage({
+        run: { command: "ls", args: pkgs.map(bin => `/usr/bin/${bin}`) },
+    })
 }
 
 void main()
 ```
-
-```bash
- $ npm run build
-
-> dacc-npx@1.0.0 build
-> tsx src/main
-
-Building image with tag dacc-a1fb0f8c
-[+] Building 0.1s (7/7) FINISHED                                                                                                                          docker:desktop-linux
- => [internal] load build definition from Dockerfile                                                                                                                      0.0s
- => => transferring dockerfile: 1.10kB                                                                                                                                    0.0s
- => resolve image config for docker-image://ghcr.io/r2d4/llb:1.0.1                                                                                                        0.0s
- => docker-image://ghcr.io/r2d4/llb:1.0.1                                                                                                                          0.0s
- => llb-json-api                                                                                                                                                          0.0s
- => => transferring dockerfile: 1.10kB                                                                                                                                    0.0s
- => [from] alpine                                                                                                                                                         0.0s
- => [run] echo Hello, World! > /hello.txt                                                                                                                          0.0s
- => exporting to image                                                                                                                                                    0.0s
- => => exporting layers                                                                                                                                                   0.0s
- => => writing image sha256:6e63d7fc63b7b8022ba41ececc5dde119d7bff5b0d6fc16008fe2b19c7e23f8d                                                                              0.0s
- => => naming to docker.io/library/dacc-a1fb0f8c                                                                                                                          0.0s
-
-View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qj27d9ecmb43wlsr9y4oddx4b
-Hello, World!
+Running it for the first time takes 1.8s. 
 ```
-
-
-
-
+[+] Building 1.8s (10/10) FINISHED  
+...
+ => [from] alpine                                                                                                 0.0s
+ => [run] apk add wget                                                                                            1.4s
+ => [run] apk add curl                                                                                            1.0s
+ => [run] apk add git                                                                                             1.0s
+ => [merge] [run] apk add git, [run] apk add curl, [run] apk add wget                                             0.2s
+ ...
+ ```
+ Now add another package to the list
+ ```
+const bins = ["git", "curl", "wget"]
 

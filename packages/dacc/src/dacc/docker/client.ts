@@ -224,14 +224,15 @@ export class DockerBuildClient {
     async build(dockerfile: string, contextPath: string = '.', options: DockerBuildOptions = {}): Promise<void> {
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docker-build-'));
         const dockerfilePath = path.join(tmpDir, 'Dockerfile');
-
         try {
             fs.writeFileSync(dockerfilePath, dockerfile);
             const cmd = this.buildCommand(options, dockerfilePath);
+            console.log("Context path:", contextPath);
             await new Promise<void>((resolve, reject) => {
                 const dockerProcess = spawn(cmd[0], cmd.slice(1), {
                     stdio: 'inherit',
-                    cwd: contextPath
+                    // make this relative to the file that is running
+                    cwd: contextPath,
                 });
 
                 dockerProcess.on('error', (error) => {

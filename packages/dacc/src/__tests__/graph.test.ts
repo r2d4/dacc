@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { Graph } from '../dac/graph/graph';
+import { Graph } from '../dacc/graph/graph';
 
 interface TestNode {
     id: string;
