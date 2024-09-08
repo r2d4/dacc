@@ -16,7 +16,7 @@ async function main() {
 
     // State also contains helper methods for building and running images
     // This is equivalent to a docker run command
-    state.runImage({ run: { command: "cat", args: ["/hello.txt"] } })
+    state.image.run({ run: { command: "cat", args: ["/hello.txt"] } })
 }
 
 void main()

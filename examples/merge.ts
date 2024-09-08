@@ -23,7 +23,7 @@ async function main() {
     root.from(baseImage).script([...addRepos, "apk update"])
         .do(installPkgs("apk add", ["cowsay@testing", "fortune"]))
 
-    root.runImage({
+    root.image.run({
         run: { command: "/bin/sh", args: ["-c", "fortune | cowsay"] },
     })
 }

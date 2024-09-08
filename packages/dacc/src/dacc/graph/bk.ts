@@ -51,22 +51,11 @@ class BKNode implements DataNode<BKNodeData> {
  * The graph is a directed acyclic graph.
  */
 class BKGraph extends Graph<BKNode> {
-    private buildImage: string = "ghcr.io/r2d4/llb:1.0.1"
-
-    constructor() {
-        super();
-    }
-
     toBase64Definition(): string {
         const proto = toBinary(DefinitionSchema, this.toDefinition());
         const binaryString = proto.reduce((str, byte) => str + String.fromCharCode(byte), '');
         return btoa(binaryString)
     }
-
-    toConfig(): string {
-        return `#syntax=${this.buildImage}\n${this.toBase64Definition()}`
-    }
-
     static fromGraph<T extends DataNode<BKNodeData>>(g: Graph<T>): BKGraph {
         const graph = new BKGraph();
         const sorted = g.sort();

@@ -25,7 +25,7 @@ async function main() {
         )
     )
 
-    output.runImage({
+    await output.image.run({
         run: { command: "cat", args: ["/hello.txt", "/dacc.txt"] },
     })
 }

@@ -149,9 +149,12 @@ export interface DockerRunOptions {
     args?: string[];
 }
 
+export type CommandOutput = {
+    stdout: string;
+    stderr: string;
+};
 
-
-export class DockerBuildClient {
+export class DockerClient {
     private buildCommand(options: DockerBuildOptions, dockerfilePath: string): string[] {
         const cmd: string[] = ['docker', 'buildx', 'build'];
 
@@ -171,7 +174,7 @@ export class DockerBuildClient {
             }
         });
 
-        cmd.push('-f', dockerfilePath, '.');
+        cmd.push('-f', dockerfilePath, options?.contextPath || '.');
         return cmd;
     }
 
@@ -203,51 +206,55 @@ export class DockerBuildClient {
         return cmd;
     }
 
-    async run(image: string, options: DockerRunOptions = {}): Promise<void> {
+    private async spawnDockerProcess(cmd: string[], options: { cwd?: string } = {}): Promise<CommandOutput> {
         return new Promise((resolve, reject) => {
-            const cmd = this.runCommand(image, options);
+            const dockerProcess = spawn(cmd[0], cmd.slice(1), {
+                stdio: ['inherit', 'pipe', 'pipe'],
+                cwd: options.cwd,
+            });
 
-            const dockerProcess = spawn(cmd[0], cmd.slice(1), { stdio: 'inherit' });
+            let stdout = '';
+            let buildOutput = '';
+
+            dockerProcess.stdout.on('data', (data) => {
+                stdout += data.toString();
+                console.log(data.toString());
+            });
+
+            dockerProcess.stderr.on('data', (data) => {
+                buildOutput += data.toString();
+                console.log(data.toString());
+            });
+
             dockerProcess.on('error', reject);
+
             dockerProcess.on('close', (code) => {
                 if (code === 0) {
-                    resolve();
+                    resolve({ stdout, stderr: buildOutput });
                 } else {
-                    const stderr = dockerProcess.stderr?.read()?.toString() || '';
-                    reject(new Error(`Docker run failed with exit code ${code}: ${stderr}`));
+                    // Only treat as an error if the exit code is non-zero
+                    console.error(buildOutput);
+                    reject(new Error(`Docker process failed with exit code ${code}`));
                 }
             });
         });
     }
 
 
-    async build(dockerfile: string, contextPath: string = '.', options: DockerBuildOptions = {}): Promise<void> {
+    async run(image: string, options: DockerRunOptions = {}): Promise<CommandOutput> {
+        const cmd = this.runCommand(image, options);
+        return this.spawnDockerProcess(cmd);
+    }
+
+    async build(dockerfile: string, contextPath: string = '.', options: DockerBuildOptions = {}): Promise<CommandOutput> {
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docker-build-'));
         const dockerfilePath = path.join(tmpDir, 'Dockerfile');
+
         try {
             fs.writeFileSync(dockerfilePath, dockerfile);
             const cmd = this.buildCommand(options, dockerfilePath);
-            console.log("Context path:", contextPath);
-            await new Promise<void>((resolve, reject) => {
-                const dockerProcess = spawn(cmd[0], cmd.slice(1), {
-                    stdio: 'inherit',
-                    // make this relative to the file that is running
-                    cwd: contextPath,
-                });
 
-                dockerProcess.on('error', (error) => {
-                    console.error('Spawn error:', error);
-                    reject(error);
-                });
-
-                dockerProcess.on('close', (code) => {
-                    if (code === 0) {
-                        resolve();
-                    } else {
-                        reject(new Error(`Docker build failed with exit code ${code}. Command: ${cmd.join(' ')}`));
-                    }
-                });
-            });
+            return await this.spawnDockerProcess(cmd, { cwd: contextPath });
         } catch (error) {
             console.error('Error during build:', error);
             throw error;
@@ -259,25 +266,7 @@ export class DockerBuildClient {
                 console.error('Error cleaning up temporary files:', error);
             }
         }
-
     }
-}
 
-// // Example usage:
-// const client = new DockerBuildClient();
-// const dockerfile = `
-// FROM node:14
-// WORKDIR /app
-// COPY package*.json ./
-// RUN npm install
-// COPY . .
-// CMD ["npm", "start"]
-// `;
-// client.build(dockerfile, {
-//     tag: ['myapp:latest'],
-//     platform: ['linux/arm64'],
-//     buildArg: ['NODE_ENV=production'],
-//     noCache: true
-// })
-//     .then(() => console.log('Build completed successfully'))
-//     .catch((error) => console.error('Build failed:', error));
+
+}

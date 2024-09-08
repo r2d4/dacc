@@ -1,6 +1,5 @@
 {
     "babelrc": false,
-    "rootMode": "upward",
     "presets": [
         [
             "@babel/preset-env",

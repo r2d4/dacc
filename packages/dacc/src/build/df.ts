@@ -86,12 +86,13 @@ async function main() {
                 ])
             ).current
 
-    root.buildImage({
+    root.image.build({
         node: protoOut,
         // we copy the final layer to the host
         // since the final layer is only a /generated folder, 
         // this creates src/generated on the host
-        output: ["src"]
+        tag: ["df-generated"],
+        // output: ["src"]
     })
 }
 

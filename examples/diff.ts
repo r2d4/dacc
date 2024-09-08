@@ -9,7 +9,7 @@ async function main() {
 
     // This outputs the diff between the two images
     // which is the file /result.txt with the current date
-    root.buildImage({ output: ["."] })
+    root.image.build({ output: ["."] })
 }
 
 void main()

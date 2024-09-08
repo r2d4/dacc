@@ -12,7 +12,7 @@ async function main() {
         ),
     )
 
-    s.runImage({
+    s.image.run({
         run: { command: "ls", args: bins.map(bin => `/usr/bin/${bin}`) },
     })
 }

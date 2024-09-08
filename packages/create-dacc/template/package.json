@@ -1,5 +1,5 @@
 {
-    "name": "dacc-app",
+    "name": "create-dacc-template",
     "version": "1.0.0",
     "description": "A dacc app created with create-dacc",
     "type": "module",

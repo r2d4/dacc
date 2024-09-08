@@ -63,20 +63,18 @@ export function diff(lower: DataNode<BKNodeData>, upper: DataNode<BKNodeData>): 
     })
 }
 
-
-
 export function copy(src: string | string[], dest: string, initialInput: number, secondaryInput: number, inputs: number, cwd: string): BKNodeData {
     const srcs = Array.isArray(src) ? src : [src];
     return {
         op: {
             file: {
                 actions: srcs.map((src, index) => ({
-                    input: (index === 0 ? initialInput : inputs + index).toString(),
+                    input: (index === 0 ? initialInput : inputs + index - 1).toString(),
                     secondaryInput: secondaryInput.toString(),
                     output: (index === srcs.length - 1 ? 0 : -1).toString(),
                     copy: {
                         src: path.resolve("/", src),
-                        dest: path.resolve("/", cwd, dest),
+                        dest: path.resolve("/", cwd, dest) + (srcs.length > 1 || srcs.some(s => s.includes("*")) ? "/" : ""),
                         mode: -1,
                         timestamp: "-1",
                         createDestPath: true,

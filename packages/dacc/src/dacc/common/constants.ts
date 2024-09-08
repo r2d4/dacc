@@ -150,4 +150,6 @@ export type OpAttrKey = keyof typeof OpAttr;
 export type OpAttrValue = OpAttr | AttrValues;
 export const ContextIdentifier = "local://context";
 
-export const DefaultLinuxEnv = { "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
+export const DefaultLinuxEnv = new Map<string, string>([
+    ['PATH', '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'],
+]);

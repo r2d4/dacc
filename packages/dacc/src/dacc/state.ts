@@ -2,7 +2,8 @@ import { toBinary } from "@bufbuild/protobuf";
 import { DefinitionSchema, PlatformJson } from '../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
 import { Digest } from "./common/digest";
-import { DockerBuildClient, DockerBuildOptions, DockerRunOptions } from "./docker/client";
+import { CommandOutput, DockerBuildOptions, DockerClient, DockerRunOptions } from "./docker/client";
+import { OCIImage } from "./docker/oci";
 import { BKGraph, BKNode, BKNodeData, DataNode } from "./graph/bk";
 import { Graph, GraphDotConfig } from "./graph/graph";
 import { contextNode, copy, diff, from, getArch, mkFile, nested, OpOption, run, workdir } from "./patterns/ops";
@@ -12,7 +13,7 @@ export type StateProps = {
      * The Docker build client to use for building images.
      * Defaults to a new DockerBuildClient instance.
      */
-    client?: DockerBuildClient;
+    client?: DockerClient;
     /**
      * The platform to use for the build.
      * Defaults to the current platform.
@@ -21,7 +22,7 @@ export type StateProps = {
 };
 
 const defaultStateProps: Required<StateProps> = {
-    client: new DockerBuildClient(),
+    client: new DockerClient(),
     platform: {
         OS: "linux",
         Architecture: getArch(),
@@ -53,32 +54,16 @@ export const SCRATCH = undefined;
  * It maintains a directed acyclic graph (DAG) of build steps and operations.
  */
 export interface IState {
-    /**
-     * Builds a Docker image from the current state.
-     * @param opts - Options for the Docker build process.
-     * @returns A Promise that resolves to the tag of the built image.
-     */
-    buildImage(opts?: DockerBuildOptions & { node?: StateNode }): Promise<string>;
 
     /**
-     * Builds and runs a Docker image from the current state.
-     * @param opts - Options for building and running the Docker image.
+     * The Docker image instance associated with the current State.
      */
-    runImage(opts?: {
-        run?: DockerRunOptions,
-        build?: DockerBuildOptions & { node?: StateNode }
-    }): Promise<void>;
+    image: Image;
 
     /**
      * The current head node of the build graph.
      */
     current: StateNode | undefined;
-
-    /**
-     * Creates a deep copy of the current State.
-     * @returns A new State instance with the same properties as the current one.
-     */
-    clone(): IState;
 
     /**
      * Converts the current state to a docker-buildable file.
@@ -210,63 +195,92 @@ export interface IState {
     with(...opts: OpOption[]): IState;
 }
 
+/**
+ * Image provides a high-level API for building and running Docker images.
+ * based on a State instance.
+ */
+export class Image {
+    constructor(private state: State, private client: DockerClient) { }
+
+    /**
+     * Builds the current state into a Docker image.
+     * @param opts - The options to use for the build operation.
+     * @returns The stdout output of the build process.
+     */
+    async build(opts: DockerBuildOptions & { node?: StateNode } = {}): Promise<CommandOutput & { tag: string }> {
+        const tag = this.tag(opts.node)
+        opts.tag = opts.tag || []
+        opts.tag.push(tag)
+
+        return new Promise(
+            resolve => this.client.build(this.state.toConfig(opts.node), opts.contextPath, opts)
+                .then(output => resolve({ ...output, tag }))
+        )
+    }
+
+    /**
+     * Runs the current state as a Docker container.
+     * @param opts - The options to use for the run operation.
+     * @returns The stdout output of the run process.
+     */
+    async run(opts?: {
+        run?: DockerRunOptions,
+        build?: DockerBuildOptions,
+    }): Promise<CommandOutput> {
+        return await this.build(opts?.build).then(({ tag }) => this.client.run(tag, opts?.run));
+    }
+
+    private tag(node?: StateNode): string {
+        return `dacc-${Digest.create("sha256", new TextEncoder().encode(this.state.toConfig(node))).toHex().slice(0, 8)}`
+    }
+}
+
+type StateMetadata = {
+    cwd: string;
+    env: Map<string, string>;
+
+    labels: Map<string, string>;
+    author?: string;
+
+    command?: string[];
+    entrypoint?: string[];
+}
 
 export class State implements IState {
-    private client: DockerBuildClient;
     private platform: PlatformJson;
 
-    private _cwd: string = "/";
-    private _env: Map<string, string> = new Map(Object.entries(DefaultLinuxEnv));
+    private builder: string = `ghcr.io/r2d4/llb`;
+    private builderVersion: string = "1.0.3";
+
+    private metadata: StateMetadata = {
+        cwd: "/",
+        labels: new Map(),
+        env: DefaultLinuxEnv,
+    }
 
     private context: StateNode | null;
     private g: Graph<StateNode> = new Graph<StateNode>();
     private head?: StateNode;
+
+    private _image: Image;
 
     /**
     * Creates a new State instance.
     * @param props - The properties to initialize the State with.
     */
     constructor(props: StateProps = {}) {
-        this.client = props.client ?? defaultStateProps.client;
         this.platform = props.platform ?? defaultStateProps.platform;
+        this._image = new Image(this, props.client ?? defaultStateProps.client);
+        this.metadata.labels.set("r2d4.dacc.version", this.builderVersion);
+        this.metadata.labels.set("r2d4.dacc.builder", this.builder);
     }
 
-
-    async buildImage(opts: DockerBuildOptions & { node?: StateNode } = {}): Promise<string> {
-        const config = this.toConfig(opts.node);
-        const tag = `dacc-${Digest.create("sha256", new TextEncoder().encode(config)).toHex().slice(0, 8)}`;
-        console.log(`Building image with tag ${tag}`);
-        opts.tag = opts.tag || [];
-        opts.tag.push(tag);
-        return new Promise<string>((resolve) => this.client.build(config, opts.contextPath, {
-            ...opts,
-        }).then(() => resolve(tag)))
-    }
-
-    async runImage(opts?: {
-        run?: DockerRunOptions,
-        build?: DockerBuildOptions & { node?: StateNode }
-    }): Promise<void> {
-        return this.buildImage(opts?.build).then((image) => {
-            this.client.run(image, opts?.run);
-        })
+    get image(): Image {
+        return this._image;
     }
 
     get current(): StateNode | undefined {
         return this.head;
-    }
-
-    clone(): State {
-        const s = new State({
-            client: this.client,
-            platform: this.platform,
-        });
-        s._env = new Map(this._env);
-        s._cwd = this._cwd;
-        s.context = this.context;
-        s.g = this.g.copy();
-        s.head = this.head;
-        return s;
     }
 
     from(identifier: string, platform?: PlatformJson): State {
@@ -302,8 +316,45 @@ export class State implements IState {
         return this.add(new StateNode(parents, nested()))
     }
 
+    cmd(cmd: string | string[]) {
+        if (typeof cmd === "string") cmd = [cmd];
+        this.metadata.command = cmd;
+        return this;
+    }
+
+    entrypoint(entrypoint: string | string[]) {
+        if (typeof entrypoint === "string") entrypoint = [entrypoint];
+        this.metadata.entrypoint = entrypoint;
+        return this;
+    }
+
+    author(author: string): State {
+        this.metadata.author = author;
+        return this;
+    }
+
+    labels(labels: Map<string, string>): State {
+        labels.forEach((value, key) => this.metadata.labels.set(key, value));
+        return this;
+    }
+
     toConfig(node?: StateNode): string {
-        return this.output(node).toConfig();
+        const def = this.output(node).toBase64Definition();
+        const imageConfig: OCIImage = {
+            created: new Date(0),
+            author: this.metadata.author,
+            config: {
+                Cmd: this.metadata.command,
+                Entrypoint: this.metadata.entrypoint,
+                Env: Array.from(this.metadata.env.entries()).map(([key, value]) => `${key}=${value}`),
+                WorkingDir: this.metadata.cwd,
+                Labels: Object.fromEntries(this.metadata.labels.entries()),
+            },
+        }
+        return `#syntax=${this.builder}:${this.builderVersion}\n${JSON.stringify({
+            imageConfig,
+            definition: def,
+        })}`
     }
 
     toJSON(node?: StateNode): StateNode[] {
@@ -315,7 +366,7 @@ export class State implements IState {
     }
 
     env(key: string, value: string): State {
-        this._env.set(key, value);
+        this.metadata.env.set(key, value);
         return this;
     }
 
@@ -326,7 +377,7 @@ export class State implements IState {
     }
 
     workdir(path: string): State {
-        this._cwd = path;
+        this.metadata.cwd = path;
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
         this.add(new StateNode(Array.from(parents), workdir(path)))
@@ -336,7 +387,7 @@ export class State implements IState {
     run(command: string): State {
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
-        this.add(new StateNode(Array.from(parents), run(command, this._env, this._cwd)));
+        this.add(new StateNode(Array.from(parents), run(command, this.metadata.env, this.metadata.cwd)));
         return this;
     }
 
@@ -346,7 +397,7 @@ export class State implements IState {
         const mkFileOp = mkFile("/EOF", Buffer.from(script.join("\n")).toString("base64"));
         const mkFileNode = new StateNode([], mkFileOp);
         this.add(mkFileNode, false);
-        const runOp = run("/dev/pipes/EOF", this._env, "/");
+        const runOp = run("/dev/pipes/EOF", this.metadata.env, "/");
         runOp.op?.exec?.mounts?.push({
             input: "1",
             selector: "/",
@@ -407,9 +458,8 @@ export class State implements IState {
         }
         const input = this.head ? 0 : -1;
         const secondaryInput = parents.size - 1;
-        const node = new StateNode(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size, this._cwd))
+        const node = new StateNode(Array.from(parents), copy(src, dest, input, secondaryInput, parents.size, this.metadata.cwd))
         this.add(node);
-        console.log(JSON.stringify(this, null, 2))
         return this;
     }
 
