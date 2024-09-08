@@ -1,9 +1,9 @@
 import { Digest } from "../common/digest";
 
 /**
- * ImageConfig defines the execution parameters which should be used as a base when running a container using an image.
+ * ImageConfiguration defines the execution parameters which should be used as a base when running a container using an image.
  */
-interface ImageConfig {
+interface ImageConfiguration {
     /** User defines the username or UID which the process in the container should run as. */
     User?: string;
 
@@ -61,10 +61,10 @@ interface RootFS {
  */
 interface Platform {
     /** Architecture field specifies the CPU architecture, for example `amd64` or `ppc64le`. */
-    architecture?: string;
+    architecture: string; // Changed from optional to required
 
     /** OS specifies the operating system, for example `linux` or `windows`. */
-    os?: string;
+    os: string; // Changed from optional to required
 
     /** OSVersion is an optional field specifying the operating system version, for example on Windows `10.0.14393.1066`. */
     "os.version"?: string;
@@ -81,7 +81,7 @@ interface Platform {
  */
 interface History {
     /** Created is the combined date and time at which the layer was created, formatted as defined by RFC 3339, section 5.6. */
-    created?: Date;
+    created?: string; // Changed from Date to string to match RFC 3339 format
 
     /** CreatedBy is the command which created the layer. */
     created_by?: string;
@@ -96,29 +96,28 @@ interface History {
     empty_layer?: boolean;
 }
 
-
 /**
- * Image is the JSON structure which describes some basic information about the image.
+ * OCIImageConfig is the JSON structure which describes some basic information about the image.
  * This provides the `application/vnd.oci.image.config.v1+json` mediatype when marshalled to JSON.
  */
-interface OCIImage extends Platform {
+interface OCIImageConfig extends Platform {
     /** Created is the combined date and time at which the image was created, formatted as defined by RFC 3339, section 5.6. */
-    created?: Date;
+    created?: string; // Changed from Date to string to match RFC 3339 format
 
     /** Author defines the name and/or email address of the person or entity which created and is responsible for maintaining the image. */
     author?: string;
 
     /** Config defines the execution parameters which should be used as a base when running a container using the image. */
-    config?: ImageConfig;
+    config?: ImageConfiguration;
 
     /** RootFS references the layer content addresses used by the image. */
-    rootfs?: RootFS;
+    rootfs: RootFS; // Changed from optional to required
 
     /** History describes the history of each layer. */
     history?: History[];
 }
 
 export {
-    History, ImageConfig, OCIImage, Platform, RootFS
+    History, ImageConfiguration, OCIImageConfig, Platform, RootFS
 };
 

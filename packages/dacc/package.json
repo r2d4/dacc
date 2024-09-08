@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.0.0",
 		"@bufbuild/protoc-gen-es": "^2.0.0",
+		"docker-registry-client": "^3.4.0",
 		"shlex": "^2.1.2",
 		"uuid": "^10.0.0"
 	}

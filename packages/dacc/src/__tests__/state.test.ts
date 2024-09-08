@@ -1,10 +1,8 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { State } from '../dacc/state';
 
-jest.setTimeout(10000);
 describe('dacc integration tests', () => {
     const baseImage = 'alpine:3.20';
-
 
     it('image build', async () => {
         await new State().from(baseImage)
