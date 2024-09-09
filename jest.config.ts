@@ -16,6 +16,7 @@ const config: Config.InitialOptions = {
   maxWorkers: 8,
   maxConcurrency: 8,
   testEnvironment: "node",
+
   projects: packages.map(packageName => ({
     displayName: packageName,
     rootDir: resolve(__dirname, packageName),

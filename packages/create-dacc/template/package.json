@@ -5,7 +5,7 @@
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
-        "build": "tsx src/main"
+        "start": "tsx src/main"
     },
     "keywords": [
         "dacc"
@@ -13,7 +13,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "dacc": "^0.1.0"
+        "dacc": "^0.6.0"
     },
     "devDependencies": {
         "@types/node": "^22.5.1",

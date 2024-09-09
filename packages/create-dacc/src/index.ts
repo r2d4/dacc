@@ -39,7 +39,7 @@ try {
     console.log(`Project ${projectName} created successfully!`);
     console.log('To get started, run:');
     console.log(`  cd ${projectName}`);
-    console.log('  npm run build');
+    console.log('  npm start');
 } catch (err) {
     console.error('An error occurred:', err);
 }
