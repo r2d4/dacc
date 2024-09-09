@@ -10,9 +10,27 @@ describe('DockerRegistryClient Integration Tests', () => {
         client = new DockerRegistryClient('https://registry-1.docker.io', { username, password });
     });
 
+    it('should fetch a manifest for a ghcr.io image', async () => {
+        const client = new DockerRegistryClient('https://ghcr.io');
+        const imageName = 'astral-sh/uv';
+        const tag = 'latest';
+
+        const manifest = await client.getManifest(imageName, tag);
+        // Verify the structure of the returned manifest
+        expect(manifest).toBeDefined();
+        expect(manifest.schemaVersion).toBe(2);
+        expect(manifest.mediaType).toBe('application/vnd.oci.image.manifest.v1+json');
+        expect(manifest.config).toBeDefined();
+        expect(manifest.config.mediaType).toBe('application/vnd.oci.image.config.v1+json');
+        expect(manifest.layers).toBeDefined();
+        expect(Array.isArray(manifest.layers)).toBe(true);
+        expect(manifest.layers.length).toBeGreaterThan(0);
+    })
+
+
     it('should fetch a manifest for a public image', async () => {
         // We'll use the official Alpine Linux image as a test case
-        const imageName = 'library/ubuntu';
+        const imageName = 'ubuntu';
         const tag = 'latest';
 
         const manifest = await client.getManifest(imageName, tag);

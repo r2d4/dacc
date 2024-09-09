@@ -1,9 +1,9 @@
 import { toBinary } from "@bufbuild/protobuf";
+import { OCIImageConfig } from "@dacc/oci";
 import { DefinitionSchema, PlatformJson } from '../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
 import { Digest } from "./common/digest";
 import { CommandOutput, DockerBuildOptions, DockerClient, DockerRunOptions } from "./docker/client";
-import { OCIImage } from "./docker/oci";
 import { BKGraph, BKNode, BKNodeData, DataNode } from "./graph/bk";
 import { Graph, GraphDotConfig } from "./graph/graph";
 import { contextNode, copy, diff, from, getArch, mkFile, nested, OpOption, run, workdir } from "./patterns/ops";
@@ -340,7 +340,7 @@ export class State implements IState {
 
     toConfig(node?: StateNode): string {
         const def = this.output(node).toBase64Definition();
-        const imageConfig: OCIImage = {
+        const imageConfig: Partial<OCIImageConfig> = {
             created: new Date(0),
             author: this.metadata.author,
             config: {

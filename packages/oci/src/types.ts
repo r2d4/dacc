@@ -76,7 +76,7 @@ interface OCIImageManifest {
 
 // OCI Image Configuration
 interface OCIImageConfig {
-    created?: string;
+    created?: Date;
     author?: string;
     architecture: string;
     os: string;
@@ -97,10 +97,7 @@ interface OCIImageConfig {
         Memory?: number;
         MemorySwap?: number;
         CpuShares?: number;
-        Healthcheck?: {
-            // Note: Specific Healthcheck properties are not defined in the spec
-            // You may want to define these based on your specific needs
-        };
+        Healthcheck?: {};
     };
     rootfs: {
         type: "layers";

@@ -1,6 +1,5 @@
 import { Descriptor, DockerManifestList, DockerManifestMediaType, OCIImageConfig, OCIImageIndex, OCIImageManifest, OCIMediaType, Platform } from "./types";
 
-
 export class DockerRegistryClient {
     private baseUrl: string;
     private username?: string;
@@ -63,7 +62,7 @@ export class DockerRegistryClient {
 
         const tokenResponse = await fetch(tokenUrl.toString(), { headers });
         if (!tokenResponse.ok) {
-            throw new Error('Failed to obtain bearer token');
+            throw new Error('Failed to obtain bearer token:' + await tokenResponse.text());
         }
 
         interface TokenResponse {
