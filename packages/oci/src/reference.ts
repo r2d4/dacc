@@ -1,3 +1,5 @@
+import { Digest } from "@dacc/common";
+
 // Regular expressions for individual components
 const DOMAIN_COMPONENT = `(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])`;
 const DOMAIN = `(?:${DOMAIN_COMPONENT}(?:\\.${DOMAIN_COMPONENT})*|\\[(?:[a-fA-F0-9:]+)\\])(?::[0-9]+)?`;
@@ -17,8 +19,14 @@ const OFFICIAL_REPO_PREFIX = "library";
 const DEFAULT_TAG = "latest";
 const LOCALHOST = "localhost";
 
+type Tag = string;
+
 class ImageReference {
-    private constructor(readonly domain: string, readonly path: string, readonly tag: string | null = null, readonly digest: string | null = null) { }
+    constructor(readonly domain: string, readonly path: string, readonly tag: Tag | null = null, readonly digest: Digest | null = null) {
+        if (digest && !Digest.validate(digest.toString())) {
+            throw new Error(`Invalid digest: ${digest}`);
+        }
+    }
 
     static parse(s: string): ImageReference {
         if (s.toLowerCase() !== s) {
@@ -30,54 +38,62 @@ class ImageReference {
         }
         const [, domain, path, tag, digest] = match;
         const [parsedDomain, parsedPath] = this.normalizeDomainPath(domain, path);
-        return new ImageReference(parsedDomain, parsedPath, tag || null, digest || null);
+        let parsedDigest = null;
+        if (digest) {
+            parsedDigest = Digest.fromString(digest);
+        }
+        let parsedTag = null;
+        if (!digest && !tag) {
+            parsedTag = DEFAULT_TAG;
+        }
+        return new ImageReference(parsedDomain, parsedPath, parsedTag, parsedDigest);
     }
 
     get name(): string {
         return this.domain + "/" + this.path;
     }
 
-    public string(): string {
+    get tagOrDigest(): Tag | Digest {
+        return this.digest || this.tag || DEFAULT_TAG;
+    }
+
+    get suffix(): string {
+        if (this.digest !== null) {
+            return "@" + this.digest;
+        }
+        if (this.tag !== null) {
+            return ":" + this.tag;
+        }
+        return ":" + DEFAULT_TAG;
+    }
+
+    public toString(): string {
         let ref = this.domain;
         if (ref !== "") {
             ref += "/";
         }
         ref += this.path;
-        if (this.digest !== null) {
-            ref += "@" + this.digest;
-            return ref;
-        }
-        if (this.tag !== null) {
-            ref += ":" + this.tag;
-            return ref;
-        }
-        return ref += ":" + DEFAULT_TAG
+        ref += this.suffix;
+        return ref;
     }
 
     private static normalizeDomainPath(domain: string, path: string): [string, string] {
-
         domain = domain.replace(/\/$/, "");
-
         if (domain === LEGACY_DEFAULT_DOMAIN) {
             domain = DEFAULT_DOMAIN;
         }
-
         if (domain === "" && !path.includes('/')) {
             return [DEFAULT_DOMAIN, `${OFFICIAL_REPO_PREFIX}/${path}`];
         }
-
         if (domain === OFFICIAL_REPO_PREFIX) {
             return [DEFAULT_DOMAIN, `${OFFICIAL_REPO_PREFIX}/${path}`];
         }
-
         if (!domain.includes(".") && !domain.includes(":") && domain !== LOCALHOST) {
             return [DEFAULT_DOMAIN, domain + "/" + path];
         }
-
         if (DOMAIN_REGEXP.test(domain)) {
             return [domain, path];
         }
-
         return [domain, path];
     }
 }

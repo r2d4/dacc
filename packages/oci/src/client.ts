@@ -1,3 +1,5 @@
+import { Digest } from "@dacc/common";
+import { ImageReference } from "./reference";
 import { Descriptor, DockerManifestList, DockerManifestMediaType, OCIImageConfig, OCIImageIndex, OCIImageManifest, OCIMediaType, Platform } from "./types";
 
 export class DockerRegistryClient {
@@ -77,14 +79,14 @@ export class DockerRegistryClient {
         }
     }
 
-    async getManifest(name: string, reference: string, platform?: Platform): Promise<OCIImageManifest> {
+    async getManifest(ref: ImageReference, platform?: Platform): Promise<OCIImageManifest> {
         const headers = new Headers({
             'Accept': `${OCIMediaType.ImageManifest},${OCIMediaType.ImageIndex},${DockerManifestMediaType.V2},${DockerManifestMediaType.V2List}`
         });
-        const response = await this.request(`/v2/${name}/manifests/${reference}`, { headers });
+        const response = await this.request(`/v2/${ref.path}/manifests/${ref.tagOrDigest}`, { headers });
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error(`Manifest not found for ${name}:${reference}`);
+                throw new Error(`Manifest not found for ${ref.toString()}`);
             }
             throw new Error(`Failed to get manifest: ${response.statusText}`);
         }
@@ -92,8 +94,11 @@ export class DockerRegistryClient {
         const body = await response.json();
 
         if (contentType === OCIMediaType.ImageIndex || contentType === DockerManifestMediaType.V2List) {
+            if (ref.digest) {
+                throw new Error('Unexpected image index response for manifest request with digest');
+            }
             const index = body as OCIImageIndex | DockerManifestList;
-            return this.handleImageIndex(index, name, platform || this.defaultPlatform);
+            return this.handleImageIndex(index, ref, platform || this.defaultPlatform);
         } else if (contentType === OCIMediaType.ImageManifest || contentType === DockerManifestMediaType.V2) {
             return body as OCIImageManifest;
         } else {
@@ -101,7 +106,7 @@ export class DockerRegistryClient {
         }
     }
 
-    private async handleImageIndex(index: OCIImageIndex | DockerManifestList, name: string, platform: Platform): Promise<OCIImageManifest> {
+    private async handleImageIndex(index: OCIImageIndex | DockerManifestList, image: ImageReference, platform: Platform): Promise<OCIImageManifest> {
         const matchingManifest = index.manifests.find(m =>
             m.platform &&
             m.platform.architecture === platform.architecture &&
@@ -113,20 +118,21 @@ export class DockerRegistryClient {
             throw new Error(`No matching manifest found for platform ${JSON.stringify(platform)}`);
         }
 
-        return this.getManifest(name, matchingManifest.digest);
+        const imageWithDigest = ImageReference.parse(`${image.toString()}@${matchingManifest.digest}`);
+        return this.getManifest(imageWithDigest);
     }
 
-    async getImageConfig(name: string, reference: string, platform?: Platform): Promise<OCIImageConfig> {
-        const manifest = await this.getManifest(name, reference, platform);
-        const response = await this.request(`/v2/${name}/blobs/${manifest.config.digest}`);
+    async getImageConfig(image: ImageReference, platform?: Platform): Promise<OCIImageConfig> {
+        const manifest = await this.getManifest(image, platform);
+        const response = await this.request(`/v2/${image.path}/blobs/${manifest.config.digest}`);
         if (!response.ok) {
             throw new Error(`Failed to get image config: ${response.statusText}`);
         }
         return await response.json() as OCIImageConfig;
     }
 
-    async listTags(name: string): Promise<string[]> {
-        const response = await this.request(`/v2/${name}/tags/list`);
+    async listTags(ref: ImageReference): Promise<string[]> {
+        const response = await this.request(`/v2/${ref.path}/tags/list`);
         if (!response.ok) {
             throw new Error(`Failed to list tags: ${response.statusText}`);
         }
@@ -138,7 +144,7 @@ export class DockerRegistryClient {
         return data.tags || [];
     }
 
-    async getPlatforms(name: string, reference: string): Promise<Platform[]> {
+    async getPlatforms(name: string, reference: Digest): Promise<Platform[]> {
         const headers = new Headers({
             'Accept': `${OCIMediaType.ImageIndex},${DockerManifestMediaType.V2List}`
         });
@@ -152,7 +158,8 @@ export class DockerRegistryClient {
         const contentType = response.headers.get('Content-Type');
         if (contentType !== OCIMediaType.ImageIndex && contentType !== DockerManifestMediaType.V2List) {
             // If it's not an index, it's a single platform image
-            const config = await this.getImageConfig(name, reference);
+            const image = ImageReference.parse(`${name}@${reference}`);
+            const config = await this.getImageConfig(image);
             return [{
                 architecture: config.architecture,
                 os: config.os,

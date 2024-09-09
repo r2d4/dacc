@@ -1,3 +1,5 @@
+import { Digest } from "@dacc/common";
+
 // Docker-specific Media Type Enums
 enum DockerManifestMediaType {
     V1 = "application/vnd.docker.distribution.manifest.v1+json",
@@ -41,7 +43,7 @@ enum DeprecatedOCIMediaType {
 // Common types
 interface Descriptor {
     mediaType: OCIMediaType | DockerManifestMediaType | DockerConfigMediaType | DockerLayerMediaType | DeprecatedOCIMediaType;
-    digest: string;
+    digest: Digest;
     size: number;
     urls?: string[];
     annotations?: { [key: string]: string };
