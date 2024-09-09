@@ -1,7 +1,7 @@
 import type { Config } from "@jest/types";
 
 // Helper function to get all package names
-const packages = ["dacc", "oci-registry"];
+const packages = ["dacc", "oci"];
 
 const config: Config.InitialOptions = {
   verbose: true,

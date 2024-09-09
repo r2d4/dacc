@@ -1,5 +1,6 @@
 import { toBinary } from "@bufbuild/protobuf";
 import { OCIImageConfig } from "@dacc/oci";
+import { DockerRegistryClient } from "packages/oci/dist";
 import { DefinitionSchema, PlatformJson } from '../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
 import { Digest } from "./common/digest";
@@ -14,6 +15,8 @@ export type StateProps = {
      * Defaults to a new DockerBuildClient instance.
      */
     client?: DockerClient;
+
+    registry?: DockerRegistryClient;
     /**
      * The platform to use for the build.
      * Defaults to the current platform.
