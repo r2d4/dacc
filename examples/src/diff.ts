@@ -13,7 +13,7 @@ async function main() {
 }
 
 if (require.main === module) {
-    await void main()
+    (async () => await void main())()
 }
 
 export { main as diff }

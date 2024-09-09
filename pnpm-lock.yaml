@@ -42,22 +42,6 @@ importers:
         specifier: ^5.5.4
         version: 5.5.4
 
-  examples:
-    dependencies:
-      dacc:
-        specifier: workspace:*
-        version: link:../packages/dacc
-    devDependencies:
-      '@jest/globals':
-        specifier: ^29.7.0
-        version: 29.7.0
-      '@types/node':
-        specifier: ^22.5.1
-        version: 22.5.1
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.5.1)(ts-node@10.9.2(@types/node@22.5.1)(typescript@5.5.4))
-
   packages/common:
     devDependencies:
       '@babel/core':
