@@ -1,20 +1,27 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
-import { DockerRegistryClient } from '../client';
+import { DOCKER_REGISTRY_URL, DockerRegistryClient } from '../client';
 import { ImageReference } from "../reference";
 
 describe('DockerRegistryClient Integration Tests', () => {
     let client: DockerRegistryClient;
 
     beforeAll(() => {
-        const username = process.env.DOCKER_USERNAME;
-        const password = process.env.DOCKER_PAT;
-        client = new DockerRegistryClient('https://registry-1.docker.io', { username, password });
+        const username = process.env.DOCKER_USERNAME || "";
+        const password = process.env.DOCKER_PAT || "";
+        client = new DockerRegistryClient(
+            {
+                registries: {
+                    "docker.io": {
+                        baseUrl: DOCKER_REGISTRY_URL,
+                        credentials: { username, password }
+                    }
+                }
+            }
+        );
     });
 
     it('should fetch a manifest for a ghcr.io image', async () => {
-        const client = new DockerRegistryClient('https://ghcr.io');
         const ref = ImageReference.parse("ghcr.io/astral-sh/uv:latest");
-        console.log(ref.name)
         const manifest = await client.getManifest(ref);
         // Verify the structure of the returned manifest
         expect(manifest).toBeDefined();
@@ -30,8 +37,6 @@ describe('DockerRegistryClient Integration Tests', () => {
 
     it('should fetch a manifest for a public image', async () => {
         const ref = ImageReference.parse("ubuntu");
-        console.log(ref)
-        console.log(ref.name)
         const manifest = await client.getManifest(ref);
 
         // Verify the structure of the returned manifest
@@ -47,10 +52,7 @@ describe('DockerRegistryClient Integration Tests', () => {
 
     it('should fetch manifest for a private image', async () => {
         const ref = ImageReference.parse("r2d4/manifest-test");
-
-        console.log("Fetching manifest for r2d4/manifest-test:latest");
         const manifest = await client.getManifest(ref);
-        console.log(manifest);
 
         // Verify the structure of the returned manifest
         expect(manifest).toBeDefined
@@ -74,16 +76,16 @@ describe('DockerRegistryClient Integration Tests', () => {
         expect(Array.isArray(config.config?.Cmd)).toBe(true);
     }, 30000);
 
-    // it('should fetch image config for a private image', async () => {
-    //     const config = await client.getImageConfig('r2d4/manifest-test', 'latest');
+    it('should fetch image config for a private image', async () => {
+        const config = await client.getImageConfig(ImageReference.parse('r2d4/manifest-test'));
 
-    //     expect(config).toBeDefined();
-    //     expect(config.architecture).toBeDefined();
-    //     expect(config.os).toBe('linux');
-    //     expect(config.config).toBeDefined();
-    //     expect(Array.isArray(config.config?.Env)).toBe(true);
-    //     expect(Array.isArray(config.config?.Cmd)).toBe(true);
-    // })
+        expect(config).toBeDefined();
+        expect(config.architecture).toBeDefined();
+        expect(config.os).toBe('linux');
+        expect(config.config).toBeDefined();
+        expect(Array.isArray(config.config?.Env)).toBe(true);
+        expect(Array.isArray(config.config?.Cmd)).toBe(true);
+    })
 
     it('should list tags for a public image', async () => {
         const tags = await client.listTags(ImageReference.parse('library/ubuntu'));

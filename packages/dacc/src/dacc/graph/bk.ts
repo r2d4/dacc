@@ -1,8 +1,8 @@
 import { create, fromJson, toBinary } from '@bufbuild/protobuf';
+import { Digest } from '@dacc/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Definition, DefinitionSchema, InputSchema, Op, OpJson, OpMetadata, OpMetadataJson, OpMetadataSchema, OpSchema } from '../../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { MetadataDescriptionKey } from '../common/constants';
-import { Digest } from '../common/digest';
 import { Graph, GraphDotConfig, Node } from './graph';
 
 class DataNode<T> implements Node {

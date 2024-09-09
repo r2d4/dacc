@@ -20,19 +20,14 @@
         "inlineSources": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
-        "baseUrl": ".",
-        "paths": {
-            "@dacc/*": [
-                "./packages/*/src"
-            ]
-        }
+        "outDir": "${configDir}/out",
+        "declaration": true,
     },
     "include": [
         "packages/**/*.ts",
         "examples/**/*.ts"
     ],
     "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
+        "node_modules"
     ]
 }

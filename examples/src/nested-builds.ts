@@ -5,18 +5,16 @@ async function main() {
     const baseImage = "alpine"
 
     // Create the first build image to merge
-    const hello = new State()
-        .from(baseImage)
+    const hello = (await new State().from(baseImage))
         .run("echo Hello, World! > /hello.txt")
 
     // Create the second build to merge
-    const awesome = new State()
-        .from(baseImage)
+    const awesome = (await new State().from(baseImage))
         .run("echo dacc is awesome! > /dacc.txt")
 
     // The parent build that will invoke
     // both nested builds in parallel
-    const output = new State().from(baseImage)
+    const output = await new State().from(baseImage)
 
     output.merge(
         output.parallel(
@@ -25,9 +23,13 @@ async function main() {
         )
     )
 
-    await output.image.run({
+    return output.image.run({
         run: { command: "cat", args: ["/hello.txt", "/dacc.txt"] },
     })
 }
 
-void main()
+if (require.main === module) {
+    await void main()
+}
+
+export { main as nestedBuilds }

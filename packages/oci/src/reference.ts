@@ -42,7 +42,7 @@ class ImageReference {
         if (digest) {
             parsedDigest = Digest.fromString(digest);
         }
-        let parsedTag = null;
+        let parsedTag = tag;
         if (!digest && !tag) {
             parsedTag = DEFAULT_TAG;
         }

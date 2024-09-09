@@ -1,3 +1,4 @@
+import { ImageReference } from '@dacc/oci';
 import { arch } from 'os';
 import * as path from 'path';
 import { split } from 'shlex';
@@ -7,12 +8,11 @@ import { BKNodeData, BKOp, DataNode } from '../graph/bk';
 
 export type OpOption = (op?: BKOp) => BKOp | undefined;
 
-export function from(identifier: string, platform?: PlatformJson): BKNodeData {
-    const { normalizedReference } = resolveDockerImageReference(identifier);
+export function from(ref: ImageReference, platform?: PlatformJson): BKNodeData {
     return {
         op: {
             source: {
-                identifier: `docker-image://${normalizedReference}`,
+                identifier: `docker-image://${ref.toString()}`,
             },
             platform,
             constraints: {},
@@ -22,7 +22,7 @@ export function from(identifier: string, platform?: PlatformJson): BKNodeData {
                 [CapID.SourceImage]: true,
             },
             description: {
-                [MetadataDescriptionKey.CustomName]: `[from] ${identifier}`,
+                [MetadataDescriptionKey.CustomName]: `[from] ${ref.toString()}`,
             },
         }
     };
@@ -223,58 +223,3 @@ export function getArch(): string {
     }
 }
 
-interface DockerImageReference {
-    registry: string;
-    repository: string;
-    tag: string;
-    digest: string | null;
-    normalizedReference: string;
-}
-
-
-function resolveDockerImageReference(reference: string): DockerImageReference {
-    // Default values
-    let registry = 'docker.io';
-    let repository = '';
-    let tag = 'latest';
-    let digest: string | null = null;
-
-    // Split the reference into parts
-    const parts = reference.split('/');
-
-    // Check if the first part could be a registry
-    if (parts.length > 1 && (parts[0].includes('.') || parts[0].includes(':'))) {
-        registry = parts.shift()!;
-    }
-
-    // The remaining parts form the repository
-    repository = parts.join('/');
-
-    // Check for tag or digest
-    const tagOrDigestSplit = repository.split('@');
-    if (tagOrDigestSplit.length > 1) {
-        // We have a digest
-        repository = tagOrDigestSplit[0];
-        digest = tagOrDigestSplit[1];
-    } else {
-        // Check for tag
-        const tagSplit = repository.split(':');
-        if (tagSplit.length > 1) {
-            repository = tagSplit[0];
-            tag = tagSplit[1];
-        }
-    }
-
-    // Handle official images
-    if (!repository.includes('/') && registry === 'docker.io') {
-        repository = 'library/' + repository;
-    }
-
-    // Create normalized reference string
-    let normalizedReference = `${registry}/${repository}:${tag}`;
-    if (digest) {
-        normalizedReference += `@${digest}`;
-    }
-
-    return { registry, repository, tag, digest, normalizedReference };
-}

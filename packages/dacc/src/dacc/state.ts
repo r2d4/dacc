@@ -1,9 +1,8 @@
 import { toBinary } from "@bufbuild/protobuf";
-import { OCIImageConfig } from "@dacc/oci";
-import { DockerRegistryClient } from "packages/oci/dist";
+import { Digest } from "@dacc/common";
+import { DockerRegistryClient, ImageReference, OCIImageConfig } from "@dacc/oci";
 import { DefinitionSchema, PlatformJson } from '../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, DefaultLinuxEnv, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from "./common/constants";
-import { Digest } from "./common/digest";
 import { CommandOutput, DockerBuildOptions, DockerClient, DockerRunOptions } from "./docker/client";
 import { BKGraph, BKNode, BKNodeData, DataNode } from "./graph/bk";
 import { Graph, GraphDotConfig } from "./graph/graph";
@@ -16,7 +15,12 @@ export type StateProps = {
      */
     client?: DockerClient;
 
+    /**
+     * The Docker registry client to use for pushing images.
+     * Defaults to a new DockerRegistryClient instance.
+     */
     registry?: DockerRegistryClient;
+
     /**
      * The platform to use for the build.
      * Defaults to the current platform.
@@ -26,9 +30,11 @@ export type StateProps = {
 
 const defaultStateProps: Required<StateProps> = {
     client: new DockerClient(),
+    registry: new DockerRegistryClient(),
     platform: {
         OS: "linux",
         Architecture: getArch(),
+        Variant: "v8",
     }
 };
 
@@ -52,6 +58,11 @@ export class StateNode extends DataNode<BKNodeData> { }
  */
 export const SCRATCH = undefined;
 
+type StateReference = {
+    node?: StateNode;
+    metadata: StateMetadata;
+}
+
 /**
  * State provides a high-level API for building and running Docker images.
  * It maintains a directed acyclic graph (DAG) of build steps and operations.
@@ -66,7 +77,7 @@ export interface IState {
     /**
      * The current head node of the build graph.
      */
-    current: StateNode | undefined;
+    current: StateReference | undefined;
 
     /**
      * Converts the current state to a docker-buildable file.
@@ -114,7 +125,7 @@ export interface IState {
      * @param platform - The platform to use for the image. Defaults to the current platform.
      * @returns The current State instance.
      */
-    from(identifier: string, platform?: PlatformJson): IState;
+    from(identifier: string, platform?: PlatformJson): Promise<IState>;
 
     /**
     * Nests another State instance within the current one.
@@ -131,10 +142,10 @@ export interface IState {
 
     /**
      * Creates a new branch in the build graph.
-     * @param node - The node to set as the head of the new branch. If not provided, creates a new branch from the current head.
+     * @param ref - The reference to branch from. If not provided, branches from the current head.
      * @returns The current State instance.
      */
-    branch(node?: StateNode): IState;
+    branch(ref?: StateReference): IState;
 
     /**
     * Sets an environment variable for subsequent operations.
@@ -188,7 +199,7 @@ export interface IState {
      * @param from - The source node to copy from. If not provided, uses the current context.
      * @returns The current State instance.
      */
-    copy(src: string[] | string, dest: string, from?: StateNode): IState;
+    copy(src: string[] | string, dest: string, from?: StateReference): IState;
 
     /**
     * Applies one or more operation options to the current head node.
@@ -210,13 +221,13 @@ export class Image {
      * @param opts - The options to use for the build operation.
      * @returns The stdout output of the build process.
      */
-    async build(opts: DockerBuildOptions & { node?: StateNode } = {}): Promise<CommandOutput & { tag: string }> {
-        const tag = this.tag(opts.node)
+    async build(opts: DockerBuildOptions & { ref?: StateReference } = {}): Promise<CommandOutput & { tag: string }> {
+        const tag = this.tag(opts.ref?.node)
         opts.tag = opts.tag || []
         opts.tag.push(tag)
 
         return new Promise(
-            resolve => this.client.build(this.state.toConfig(opts.node), opts.contextPath, opts)
+            resolve => this.client.build(this.state.toConfig(opts.ref?.node), opts.contextPath, opts)
                 .then(output => resolve({ ...output, tag }))
         )
     }
@@ -267,6 +278,8 @@ export class State implements IState {
 
     private _image: Image;
 
+    private registry: DockerRegistryClient;
+
     /**
     * Creates a new State instance.
     * @param props - The properties to initialize the State with.
@@ -274,6 +287,7 @@ export class State implements IState {
     constructor(props: StateProps = {}) {
         this.platform = props.platform ?? defaultStateProps.platform;
         this._image = new Image(this, props.client ?? defaultStateProps.client);
+        this.registry = props.registry ?? defaultStateProps.registry;
         this.metadata.labels.set("r2d4.dacc.version", this.builderVersion);
         this.metadata.labels.set("r2d4.dacc.builder", this.builder);
     }
@@ -282,14 +296,28 @@ export class State implements IState {
         return this._image;
     }
 
-    get current(): StateNode | undefined {
-        return this.head;
+    get current(): StateReference {
+        return {
+            node: this.head,
+            metadata: this.metadata
+        };
     }
 
-    from(identifier: string, platform?: PlatformJson): State {
+    async from(identifier: string, platform?: PlatformJson): Promise<State> {
+        const ref = ImageReference.parse(identifier);
         if (!platform) platform = this.platform;
-        const node = new StateNode([], from(identifier, platform));
+        const node = new StateNode([], from(ref, platform));
         this.platform = platform || this.platform;
+        await this.registry.getImageConfig(ref).then(ic => {
+            const icEnv = new Map<string, string>();
+            ic.config?.Env?.forEach(e => {
+                const [key, value] = e.split("=");
+                icEnv.set(key, value);
+            })
+            this.metadata.env = icEnv;
+            this.metadata.command = ic.config?.Cmd;
+            this.metadata.entrypoint = ic.config?.Entrypoint;
+        })
         this.add(node);
         return this;
     }
@@ -300,8 +328,9 @@ export class State implements IState {
         return this;
     }
 
-    branch(node?: StateNode): State {
-        this.head = node;
+    branch(ref?: StateReference): State {
+        this.head = ref?.node;
+        this.metadata = ref?.metadata || this.metadata;
         return this;
     }
 
@@ -346,6 +375,9 @@ export class State implements IState {
         const imageConfig: Partial<OCIImageConfig> = {
             created: new Date(0),
             author: this.metadata.author,
+            os: this.platform.OS,
+            "os.version": this.platform.OSVersion,
+            architecture: this.platform.Architecture,
             config: {
                 Cmd: this.metadata.command,
                 Entrypoint: this.metadata.entrypoint,
@@ -449,15 +481,15 @@ export class State implements IState {
         return this;
     }
 
-    copy(src: string[] | string, dest: string, from?: StateNode): State {
+    copy(src: string[] | string, dest: string, from?: StateReference): State {
         if (typeof src === "string") src = [src];
         const parents = new Set<string>()
         if (this.head) parents.add(this.head.id);
-        if (!from) {
+        if (!from?.node) {
             const ctx = this.updateContext(src);
             parents.add(ctx.id);
         } else {
-            parents.add(from.id);
+            parents.add(from.node?.id);
         }
         const input = this.head ? 0 : -1;
         const secondaryInput = parents.size - 1;

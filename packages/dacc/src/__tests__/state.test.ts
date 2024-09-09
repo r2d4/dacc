@@ -1,29 +1,34 @@
 import { describe, expect, it } from '@jest/globals';
+import path from 'path';
 import { State } from '../dacc/state';
 
 describe('dacc integration tests', () => {
-    const baseImage = 'alpine:3.20';
+    const alpineVersion = '3.20';
+    const baseImage = `busybox:uclibc`;
+    const alpineBase = `alpine:${alpineVersion}`;
+    const golangBase = `golang:1.23-alpine${alpineVersion}`;
 
     it('image build', async () => {
-        await new State().from(baseImage)
-            .image.build({ tag: ['dacc22'] });
+        const base = await new State().from(baseImage)
+        await base.image.build({ tag: ['dacc22'] });
     });
 
     it('image run', async () => {
-        await new State().from(baseImage)
-            .image.run({ run: { command: 'echo', args: ['Hello, World!'] } });
+        const base = await new State().from(baseImage)
+        await base.image.run({ run: { command: 'echo', args: ['Hello, World!'] } });
     });
 
     it('run', async () => {
-        const { stdout } = await new State().from(baseImage)
+        const base = await new State().from(baseImage)
+        const { stdout } = await base
             .run('echo Hello, World! >> /hello.txt')
             .image.run({ run: { command: 'cat', args: ['/hello.txt'] } });
         expect(stdout).toContain('Hello, World!');
     })
 
     it('run multiple commands', async () => {
-        const { stdout } = await new State()
-            .from(baseImage)
+        const base = await new State().from(baseImage)
+        const { stdout } = await base
             .run('echo Hello, World! >> /hello.txt')
             .run('echo Goodbye, World! >> /hello.txt')
             .image.run({ run: { command: 'cat', args: ['/hello.txt'] } });
@@ -32,53 +37,73 @@ describe('dacc integration tests', () => {
     })
 
 
-    // TODO: cwd is stored in the image config. dacc does not support this yet.
-    // it('workdir', async () => {
-    //     const { stdout } = await new State().from(baseImage).workdir('/app').image.run({ run: { command: 'pwd' } });
-    //     expect(stdout).toBe('/app\n');
-    // })
+    it('workdir from image config', async () => {
+        const base = await new State().from(baseImage)
+        const { stdout } = await base.workdir('/app').image.run({ run: { command: 'pwd' } });
+        expect(stdout).toBe('/app\n');
+    })
+
+    it('env from image config', async () => {
+        const base = await new State().from(golangBase)
+        const { stdout } = await base.image.run({ run: { command: 'env' } });
+        expect(stdout).toContain('GOLANG_VERSION');
+    })
 
     it('workdir', async () => {
-        const { stdout } = await new State()
-            .from(baseImage)
-            .workdir('/app').image.run({ run: { command: 'ls', args: ['/'] } });
+        const base = await new State().from(baseImage)
+        const { stdout } = await base.workdir('/app').image.run({ run: { command: 'ls', args: ['/'] } });
         expect(stdout).toContain('app\n');
     })
 
     it('copy', async () => {
-        const { stdout } = await new State()
-            .from(baseImage).copy('README.md', '/')
-            .image.run({ run: { command: 'cat', args: ['/README.md'] } });
-        // expect stdout to not be empty
-        expect(stdout).toBeTruthy();
+        const base = await new State().from(baseImage)
+        const testFile = 'a.txt'
+        const { stdout } = await base.copy(testFile, '/')
+            .image.run(
+                {
+                    build: { contextPath: path.join(__dirname, 'testfiles') },
+                    run: { command: 'ls', args: ['/'] }
+                });
+        expect(stdout).toContain(testFile);
     });
 
     it('copy multiple files', async () => {
-        const { stdout } = await new State()
-            .from(baseImage).copy(['README.md', 'package.json'], '/')
-            .image.run({ run: { command: 'ls', args: ['-l', '/'] } });
-        expect(stdout).toContain('README.md');
-        expect(stdout).toContain('package.json');
+        // TODO: test with test files
+        const files = ["a.txt", "b.txt"]
+        const base = await new State().from(baseImage)
+        const { stdout } = await base.copy(files, '/')
+            .image.run({
+                build: { contextPath: path.join(__dirname, 'testfiles') },
+                run: { command: 'ls', args: files }
+            });
+        expect(stdout).toContain(files.join('\n'));
     })
 
     it('copy directory', async () => {
-        const { stdout } = await new State()
-            .from(baseImage).copy('packages/dacc/src/__tests__', '/tests')
-            .image.run({ run: { command: 'ls', args: ['-l', '/tests'] } });
-        expect(stdout).toContain('state.test.ts');
+        const files = ["a.txt", "b.txt"]
+        const base = await new State().from(baseImage)
+        const { stdout } = await base.copy('.', '/tests')
+            .image.run(
+
+                {
+                    build: { contextPath: path.join(__dirname, 'testfiles') },
+
+                    run: { command: 'ls', args: ['/tests'] }
+                });
+        expect(stdout).toContain(files.join('\n'));
     })
 
     it('copy directory with glob', async () => {
-        const s = new State()
-        await s.from(baseImage).copy('packages/dacc/src/__tests__/*.test.ts', 'tests/')
-        const { stdout } = await s.image.run({ run: { command: 'ls', args: ['/tests/'] } });
-        expect(stdout).toContain('state.test.ts');
-    })
+        const files = ["a.txt", "b.txt"]
+        const base = await new State().from(baseImage)
+        const { stdout } = await base.copy('*.txt', '/tests')
+            .image.run(
 
-    // it('diff', async () => {
-    //     const s = new State()
-    //     const diffNode = await s.from(baseImage).diff((s) => s.copy('README.md', '/')).current
-    //     const runNode = await s.from(baseImage).
-    //         expect(diff).not.toBeUndefined()
-    // })
+                {
+                    build: { contextPath: path.join(__dirname, 'testfiles') },
+
+                    run: { command: 'ls', args: ['/tests'] }
+                });
+        expect(stdout).toContain(files.join('\n'));
+    })
 })

@@ -1,15 +1,19 @@
 import { State } from 'dacc'
 
 async function main() {
-    const root = new State()
+    const base = await new State().from("alpine")
 
-    root.from("alpine").diff(
+    base.diff(
         state => state.run("echo $(date) > /result.txt")
     )
 
     // This outputs the diff between the two images
     // which is the file /result.txt with the current date
-    root.image.build({ output: ["."] })
+    return base.image.build({ output: ["."] })
 }
 
-void main()
+if (require.main === module) {
+    await void main()
+}
+
+export { main as diff }

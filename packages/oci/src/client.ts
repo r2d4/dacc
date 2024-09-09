@@ -2,47 +2,70 @@ import { Digest } from "@dacc/common";
 import { ImageReference } from "./reference";
 import { Descriptor, DockerManifestList, DockerManifestMediaType, OCIImageConfig, OCIImageIndex, OCIImageManifest, OCIMediaType, Platform } from "./types";
 
+type RegistryCredentials = {
+    username: string;
+    password: string;
+};
+
+type RegistryConfig = {
+    baseUrl: string;
+    credentials?: RegistryCredentials;
+    bearerToken?: string;
+};
+
+type RegistryMap = {
+    [domain: string]: RegistryConfig;
+};
+
+export const DOCKER_REGISTRY_URL = 'https://registry-1.docker.io';
+
 export class DockerRegistryClient {
-    private baseUrl: string;
-    private username?: string;
-    private password?: string;
-    private bearerToken?: string;
+    private registries: RegistryMap;
     private defaultPlatform: Platform = { architecture: 'amd64', os: 'linux' };
 
-    constructor(baseUrl: string, options: {
-        username?: string;
-        password?: string;
+    constructor(props: {
+        registries?: RegistryMap,
         defaultPlatform?: Platform;
     } = {}) {
-        this.baseUrl = baseUrl;
-        this.username = options.username || process.env.DOCKER_USERNAME;
-        this.password = options.password || process.env.DOCKER_PASSWORD;
-        if (options.defaultPlatform) {
-            this.defaultPlatform = options.defaultPlatform;
-        }
+        this.registries = props.registries || {
+            'docker.io': { baseUrl: DOCKER_REGISTRY_URL }
+        };
+        this.defaultPlatform = props.defaultPlatform || { architecture: 'amd64', os: 'linux' };
     }
 
     setDefaultPlatform(platform: Platform) {
         this.defaultPlatform = platform;
     }
 
-    private async request(path: string, options: RequestInit = {}): Promise<Response> {
-        const url = `${this.baseUrl}${path}`;
+    private getRegistryConfig(ref: ImageReference): RegistryConfig {
+        const domain = ref.domain || 'docker.io';
+        const config = this.registries[domain];
+        if (!config) {
+            this.registries[domain] = { baseUrl: `https://${domain}` };
+        }
+        return this.registries[domain];
+    }
+
+    private async request(ref: ImageReference, path: string, options: RequestInit = {}): Promise<Response> {
+        const config = this.getRegistryConfig(ref);
+        const url = `${config.baseUrl}${path}`;
         const headers = new Headers(options.headers);
 
-        if (this.bearerToken) {
-            headers.set('Authorization', `Bearer ${this.bearerToken}`);
+        if (config.bearerToken) {
+            headers.set('Authorization', `Bearer ${config.bearerToken}`);
         }
 
         const response = await fetch(url, { ...options, headers });
-        if (response.status === 401 && !this.bearerToken) {
-            await this.handleAuthChallenge(response);
-            return this.request(path, options);
+        if (response.status === 401 && !config.bearerToken) {
+            await this.handleAuthChallenge(ref, response);
+            return this.request(ref, path, options);
         }
         return response;
     }
 
-    private async handleAuthChallenge(response: Response): Promise<void> {
+
+    private async handleAuthChallenge(ref: ImageReference, response: Response): Promise<void> {
+        const config = this.getRegistryConfig(ref);
         const authHeader = response.headers.get('WWW-Authenticate');
         if (!authHeader) {
             throw new Error('WWW-Authenticate header missing from 401 response');
@@ -57,14 +80,14 @@ export class DockerRegistryClient {
         tokenUrl.searchParams.append('scope', scope);
 
         let headers: Record<string, string> = {};
-        if (this.username && this.password) {
-            const authString = Buffer.from(`${this.username}:${this.password}`).toString('base64');
+        if (config.credentials) {
+            const authString = Buffer.from(`${config.credentials.username}:${config.credentials.password}`).toString('base64');
             headers['Authorization'] = `Basic ${authString}`;
         }
 
         const tokenResponse = await fetch(tokenUrl.toString(), { headers });
         if (!tokenResponse.ok) {
-            throw new Error('Failed to obtain bearer token:' + await tokenResponse.text());
+            throw new Error('Failed to obtain bearer token: ' + await tokenResponse.text());
         }
 
         interface TokenResponse {
@@ -73,8 +96,8 @@ export class DockerRegistryClient {
         }
 
         const tokenData = await tokenResponse.json() as TokenResponse;
-        this.bearerToken = tokenData.token || tokenData.access_token;
-        if (!this.bearerToken) {
+        config.bearerToken = tokenData.token || tokenData.access_token;
+        if (!config.bearerToken) {
             throw new Error('No token received from authorization server');
         }
     }
@@ -83,7 +106,7 @@ export class DockerRegistryClient {
         const headers = new Headers({
             'Accept': `${OCIMediaType.ImageManifest},${OCIMediaType.ImageIndex},${DockerManifestMediaType.V2},${DockerManifestMediaType.V2List}`
         });
-        const response = await this.request(`/v2/${ref.path}/manifests/${ref.tagOrDigest}`, { headers });
+        const response = await this.request(ref, `/v2/${ref.path}/manifests/${ref.tagOrDigest}`, { headers });
         if (!response.ok) {
             if (response.status === 404) {
                 throw new Error(`Manifest not found for ${ref.toString()}`);
@@ -122,9 +145,9 @@ export class DockerRegistryClient {
         return this.getManifest(imageWithDigest);
     }
 
-    async getImageConfig(image: ImageReference, platform?: Platform): Promise<OCIImageConfig> {
-        const manifest = await this.getManifest(image, platform);
-        const response = await this.request(`/v2/${image.path}/blobs/${manifest.config.digest}`);
+    async getImageConfig(ref: ImageReference, platform?: Platform): Promise<OCIImageConfig> {
+        const manifest = await this.getManifest(ref, platform);
+        const response = await this.request(ref, `/v2/${ref.path}/blobs/${manifest.config.digest}`);
         if (!response.ok) {
             throw new Error(`Failed to get image config: ${response.statusText}`);
         }
@@ -132,7 +155,7 @@ export class DockerRegistryClient {
     }
 
     async listTags(ref: ImageReference): Promise<string[]> {
-        const response = await this.request(`/v2/${ref.path}/tags/list`);
+        const response = await this.request(ref, `/v2/${ref.path}/tags/list`);
         if (!response.ok) {
             throw new Error(`Failed to list tags: ${response.statusText}`);
         }
@@ -145,10 +168,11 @@ export class DockerRegistryClient {
     }
 
     async getPlatforms(name: string, reference: Digest): Promise<Platform[]> {
+        const ref = ImageReference.parse(`${name}@${reference}`);
         const headers = new Headers({
             'Accept': `${OCIMediaType.ImageIndex},${DockerManifestMediaType.V2List}`
         });
-        const response = await this.request(`/v2/${name}/manifests/${reference}`, { headers });
+        const response = await this.request(ref, `/v2/${name}/manifests/${reference}`, { headers });
         if (!response.ok) {
             if (response.status === 404) {
                 throw new Error(`Manifest not found for ${name}:${reference}`);
@@ -158,8 +182,7 @@ export class DockerRegistryClient {
         const contentType = response.headers.get('Content-Type');
         if (contentType !== OCIMediaType.ImageIndex && contentType !== DockerManifestMediaType.V2List) {
             // If it's not an index, it's a single platform image
-            const image = ImageReference.parse(`${name}@${reference}`);
-            const config = await this.getImageConfig(image);
+            const config = await this.getImageConfig(ref);
             return [{
                 architecture: config.architecture,
                 os: config.os,

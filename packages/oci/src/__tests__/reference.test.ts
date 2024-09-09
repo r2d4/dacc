@@ -6,7 +6,7 @@ describe('Docker Image Reference Parser', () => {
     // Helper function to test parsing and familiarization
     const testParse = (input: string, expectedParsed: string, expectedFamiliar: string) => {
         const parsed = ImageReference.parse(input);
-        expect(parsed.string()).toBe(expectedParsed);
+        expect(parsed.toString()).toBe(expectedParsed);
     };
 
     // Test cases for various reference formats
@@ -95,7 +95,7 @@ describe('Docker Image Reference Parser', () => {
         const ref = ImageReference.parse('docker.io/user/repo:v1.0@sha256:7cc4b5aefd1d0cadf8d97d4350462ba51c694ebca145b08d7d41b41acc8db5aa');
         expect(ref.name).toBe('docker.io/user/repo');
         expect(ref.tag).toBe("v1.0");
-        expect(ref.digest).toBe('sha256:7cc4b5aefd1d0cadf8d97d4350462ba51c694ebca145b08d7d41b41acc8db5aa');
+        expect(ref.digest?.toString()).toBe('sha256:7cc4b5aefd1d0cadf8d97d4350462ba51c694ebca145b08d7d41b41acc8db5aa');
     });
 
     // Test localhost references
@@ -116,6 +116,6 @@ describe('Docker Image Reference Parser', () => {
     // Test legacy index.docker.io domain
     test('should handle legacy index.docker.io domain', () => {
         const ref = ImageReference.parse('index.docker.io/user/repo');
-        expect(ref.string()).toBe('docker.io/user/repo:latest');
+        expect(ref.toString()).toBe('docker.io/user/repo:latest');
     });
 });

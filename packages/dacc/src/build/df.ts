@@ -8,7 +8,7 @@ async function main() {
     // this is useful for creating explicit edges between nodes
     // we will use this to do the equivalent of "multi-stage" builds
     // and later to do COPY --from
-    const base = root.from("alpine:3.20").current
+    const base = (await root.from("alpine:3.20")).current
 
     const workdir = "/app"
     const apkCache = "/var/cache/apk"
@@ -87,12 +87,12 @@ async function main() {
             ).current
 
     root.image.build({
-        node: protoOut,
+        ref: protoOut,
         // we copy the final layer to the host
         // since the final layer is only a /generated folder, 
         // this creates src/generated on the host
         tag: ["df-generated"],
-        // output: ["src"]
+        output: ["src"]
     })
 }
 

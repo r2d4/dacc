@@ -1,8 +1,7 @@
 import { cacheMount, State } from 'dacc'
 
 async function main() {
-    const root = new State()
-    const baseImage = "alpine"
+    const root = await (new State().from("alpine"))
 
     const addRepos = [
         "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing",
@@ -20,12 +19,16 @@ async function main() {
      * First, we add add the repositories we need and update the package list.
      * Then, we install cowsay and fortune in parallel and merge the resulting filesystems.
      */
-    root.from(baseImage).script([...addRepos, "apk update"])
+    root.script([...addRepos, "apk update"])
         .do(installPkgs("apk add", ["cowsay@testing", "fortune"]))
 
-    root.image.run({
+    return root.image.run({
         run: { command: "/bin/sh", args: ["-c", "fortune | cowsay"] },
     })
 }
 
-void main()
+if (require.main === module) {
+    await void main()
+}
+
+export { main as merge }
