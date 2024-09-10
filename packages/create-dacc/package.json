@@ -1,6 +1,6 @@
 {
     "name": "create-dacc",
-    "version": "0.13.0",
+    "version": "0.13.1",
     "description": "A package to scaffold a dacc app environment with TypeScript",
     "main": "dist/index.js",
     "type": "module",
@@ -13,7 +13,7 @@
     "scripts": {
         "build": "rm -rf dist/ && rollup -c",
         "prepublishOnly": "pnpm run build",
-        "bump": "pnpm version minor"
+        "patch": "pnpm version patch"
     },
     "keywords": [
         "dacc",
