@@ -153,3 +153,21 @@ export const ContextIdentifier = "local://context";
 export const DefaultLinuxEnv = new Map<string, string>([
     ['PATH', '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'],
 ]);
+
+/**
+ * Represents an empty build context in a Docker build process.
+ * 
+ * This constant is used to indicate a "scratch" or completely empty starting 
+ * point for a build, equivalent to the `FROM scratch` instruction in a Dockerfile.
+ * 
+ * @constant
+ * @type {undefined}
+ * 
+ * @example
+ * // Start a build from scratch
+ * const state = new State().from(SCRATCH);
+ */
+export const SCRATCH = undefined;
+
+export const builder = `ghcr.io/r2d4/llb`;
+export const builderVersion = "1.0.3";

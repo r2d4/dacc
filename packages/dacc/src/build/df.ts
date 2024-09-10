@@ -1,5 +1,6 @@
 import { cacheMount } from "../dacc/patterns/patterns";
-import { State } from "../dacc/state";
+import { State } from "../dacc/state/state";
+import { IState } from "../dacc/state/types";
 
 async function main() {
     const root = new State()
@@ -16,10 +17,10 @@ async function main() {
     const platform = "linux-aarch_64"
 
     // A helper function to install multiple packages in parallel
-    const installPkgs = (cmd: string, pkgs: string[]) => (s: State): State =>
+    const installPkgs = (cmd: string, pkgs: string[]) => (s: IState): IState =>
         s.merge(s.parallel(
             ...pkgs.map(pkg =>
-                (s: State) => s.run(`${cmd} ${pkg}`).with(cacheMount(apkCache))
+                (s: IState) => s.run(`${cmd} ${pkg}`).with(cacheMount(apkCache))
             )
         ))
 

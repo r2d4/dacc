@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { createFile } from '../dacc/patterns/patterns';
-import { State } from '../dacc/state';
+import { State } from '../dacc/state/state';
 
 describe('dacc integration tests', () => {
     const alpineVersion = '3.20';

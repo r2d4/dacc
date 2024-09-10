@@ -267,6 +267,4 @@ export class DockerClient {
             }
         }
     }
-
-
 }

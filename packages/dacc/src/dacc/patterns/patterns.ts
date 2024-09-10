@@ -1,5 +1,6 @@
-import { BKOp } from "../graph/bk";
-import { State, StateNode } from "../state";
+import { BKNodeData } from "../graph/bk";
+import { StateNode } from "../state/state";
+import { IState } from "../state/types";
 import { mkFile } from "./ops";
 
 /**
@@ -8,10 +9,9 @@ import { mkFile } from "./ops";
  * @returns 
  * @example new State().run("apk add git").with(cacheMount("/var/cache/apk"))
  */
-const cacheMount = (target: string) => (op?: BKOp): BKOp | undefined => {
-    if (!op) throw new Error("Cannot add cache mount to undefined operation");
-    if (!op.exec) throw new Error("Cannot add cache mount to non-exec operation");
-    op.exec.mounts?.push({
+const cacheMount = (target: string) => (data?: BKNodeData): BKNodeData => {
+    if (!data?.op?.exec) throw new Error("Cannot add cache mount to undefined operation");
+    data.op.exec.mounts?.push({
         mountType: "CACHE",
         input: "-1",
         output: "-1",
@@ -20,7 +20,7 @@ const cacheMount = (target: string) => (op?: BKOp): BKOp | undefined => {
             "ID": target,
         }
     })
-    return op;
+    return data;
 }
 
 /**
@@ -29,8 +29,8 @@ const cacheMount = (target: string) => (op?: BKOp): BKOp | undefined => {
  * @param data The data to write to the file
  * @returns 
  */
-const createFile = (path: string, data: string) => (s: State): State => {
-    const parents = s.current.node ? [s.current.node.id] : []
+const createFile = (path: string, data: string) => (s: IState): IState => {
+    const parents = s.current?.node ? [s.current.node.id] : []
     return s.add(new StateNode(parents, mkFile(path, data, `[mkfile] ${path}`, 0)))
 }
 

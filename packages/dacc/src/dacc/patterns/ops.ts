@@ -4,9 +4,7 @@ import * as path from 'path';
 import { split } from 'shlex';
 import { PlatformJson } from '../../generated/github.com/moby/buildkit/solver/pb/ops_pb';
 import { CapID, ContextIdentifier, LLBDefinitionFilename, MetadataDescriptionKey, OpAttr } from '../common/constants';
-import { BKNodeData, BKOp, DataNode } from '../graph/bk';
-
-export type OpOption = (op?: BKOp) => BKOp | undefined;
+import { BKNodeData, DataNode } from '../graph/bk';
 
 export function from(ref: ImageReference, platform?: PlatformJson): BKNodeData {
     return {
