@@ -20,8 +20,6 @@
         "inlineSources": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
-        "outDir": "${configDir}/out",
-        "declaration": true,
     },
     "include": [
         "packages/**/*.ts",

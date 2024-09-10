@@ -19,6 +19,8 @@ const currentDir = process.cwd();
 const projectDir = path.resolve(currentDir, projectName);
 const templateDir = path.resolve(__dirname, 'template');
 
+const ourPackageJson = fs.readJsonSync('package.json');
+
 try {
     // Copy template to new project directory
     fs.copySync(templateDir, projectDir);
@@ -30,6 +32,7 @@ try {
     const packageJsonPath = path.join(projectDir, 'package.json');
     const packageJson = fs.readJsonSync(packageJsonPath);
     packageJson.name = projectName;
+    packageJson.dependencies['dacc'] = '^' + ourPackageJson.version;
     fs.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
 
     // Install dependencies

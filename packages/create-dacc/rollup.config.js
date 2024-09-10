@@ -12,6 +12,7 @@ const sharedPlugins = [
     copy({
         targets: [
             { src: 'template', dest: 'dist' },
+            { src: 'package.json', dest: 'dist' },
         ]
     })
 ];
