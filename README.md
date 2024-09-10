@@ -7,6 +7,9 @@
 * <ins>Cache-efficient</ins>: Represent any build graph in dacc
 * <ins>Extend</ins>: [__merge__](examples/merge.ts), [__diff__](examples/diff.ts), and [__nested builds__](examples/nested-builds.ts) operations
 
+![A very parallel build](./packages/docs/static/img/df.svg)
+*A very parallel build [(src)](./packages/dacc/src/build/df.ts) generated with dacc*
+
 ### Installation
 __dacc__ requires [Docker](https://www.docker.com).
 ```
@@ -22,7 +25,8 @@ Enter the newly created directory and run the build
 cd hello-dacc && npm start
 ```
 
-### Examples
+
+## Examples
 - [Merging / Parallism](#merging--parallelism)
 - [Diff Layers](./examples/src/diff.ts)
 - [Generating protobuf definitions for this repository](./packages/dacc/src/build/df.ts)
@@ -31,7 +35,7 @@ cd hello-dacc && npm start
 - [Nested builds](./examples/src/nested-builds.ts)
 - [Directory of additional examples](./examples)
 
-## Merging / Parallelism
+### Merging / Parallelism
 Docker images often have to install packages via a package manager. This might be specified in a single command `RUN apk add git curl wget`. But when a new package is added, the entire cache is invalidated.
 
 Instead, with dacc, you can install them in parallel and then merge the resulting filesystems. Adding or removing packages from the list won't invalidate the cache for the other packages.
