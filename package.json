@@ -6,7 +6,7 @@
 	"scripts": {
 		"test": "jest",
 		"build": "pnpm run -r build",
-		"bump": "pnpm version minor && pnpm run -r bump",
+		"bump": "pnpm run -r bump && pnpm version minor",
 		"publish": "pnpm run -r publish"
 	},
 	"devDependencies": {
