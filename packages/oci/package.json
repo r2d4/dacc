@@ -5,7 +5,7 @@
     "types": "dist/index.d.ts",
     "author": "Matt Rickard <npm@matt-rickard.com>",
     "license": "Apache-2.0",
-    "version": "0.13.6",
+    "version": "0.13.7",
     "type": "module",
     "files": [
         "dist"
