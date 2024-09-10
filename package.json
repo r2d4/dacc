@@ -1,12 +1,12 @@
 {
 	"name": "@dacc/workspace",
 	"author": "Matt Rickard <npm@matt-rickard.com>",
-	"version": "0.13.1",
+	"version": "0.13.2",
 	"private": true,
 	"scripts": {
 		"test": "jest",
 		"build": "pnpm run -r build",
-		"bump": "pnpm run -r patch && git add . && git commit -m 'patch version temp' && pnpm version patch && git reset --soft HEAD~2 && git commit -m 'patch version' && git push",
+		"bump": "pnpm run -r patch && git add . && git commit -m 'patch version temp' && pnpm version patch && git reset --soft HEAD~2 && git commit -m $(pnpm pkg get version) && git push",
 		"publish": "pnpm run -r publish"
 	},
 	"devDependencies": {
