@@ -19,7 +19,7 @@ const currentDir = process.cwd();
 const projectDir = path.resolve(currentDir, projectName);
 const templateDir = path.resolve(__dirname, 'template');
 
-const ourPackageJson = fs.readJsonSync('package.json');
+const ourPackageJson = fs.readJsonSync(path.join(currentDir, 'package.json'));
 
 try {
     // Copy template to new project directory
