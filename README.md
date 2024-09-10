@@ -29,6 +29,7 @@ cd hello-dacc && npm start
 - [Building the Buildkit Frontend Image](https://github.com/r2d4/llb/blob/main/build/src/main.ts)
 - [Multi-platform](./examples/src/multi-platform.ts)
 - [Nested builds](./examples/src/nested-builds.ts)
+- [Directory of additional examples](./examples)
 
 ## Merging / Parallelism
 Docker images often have to install packages via a package manager. This might be specified in a single command `RUN apk add git curl wget`. But when a new package is added, the entire cache is invalidated.

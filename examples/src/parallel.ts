@@ -1,4 +1,4 @@
-import { cacheMount, State } from 'dacc'
+import { cacheMount, IState, State } from 'dacc'
 
 async function main() {
     const s = (await new State().from("alpine"))
@@ -7,7 +7,7 @@ async function main() {
 
     s.merge(
         s.parallel(
-            ...bins.map(bin => (s: State) =>
+            ...bins.map(bin => (s: IState) =>
                 s.run(`apk add ${bin}`).with(cacheMount("/var/cache/apk")))
         ),
     )

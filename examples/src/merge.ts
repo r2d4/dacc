@@ -1,4 +1,4 @@
-import { cacheMount, State } from 'dacc'
+import { cacheMount, IState, State } from 'dacc'
 
 async function main() {
     const root = await (new State().from("alpine"))
@@ -8,10 +8,10 @@ async function main() {
     ].map(repo => `echo "${repo}" >> /etc/apk/repositories`)
 
     const apkCache = "/var/cache/apk"
-    const installPkgs = (cmd: string, pkgs: string[]) => (s: State): State =>
+    const installPkgs = (cmd: string, pkgs: string[]) => (s: IState): IState =>
         s.merge(s.parallel(
             ...pkgs.map(pkg =>
-                (s: State) => s.run(`${cmd} ${pkg}`).with(cacheMount(apkCache))
+                (s: IState) => s.run(`${cmd} ${pkg}`).with(cacheMount(apkCache))
             )
         ))
 
