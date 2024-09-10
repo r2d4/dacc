@@ -106,4 +106,29 @@ describe('dacc integration tests', () => {
                 });
         expect(stdout).toContain(files.join('\n'));
     })
+
+    it('nested build', async () => {
+        const hello = (await new State().from(baseImage))
+            .run("echo Hello, World! > /hello.txt")
+
+        // Create the second build to merge
+        const awesome = (await new State().from(baseImage))
+            .run("echo dacc is awesome! > /dacc.txt")
+
+        // The parent build that will invoke
+        // both nested builds in parallel
+        const output = await new State().from(baseImage)
+
+        output.merge(
+            output.parallel(
+                state => state.nested(hello),
+                state => state.nested(awesome),
+            )
+        )
+        const { stdout } = await output.image.run({
+            run: { command: "cat", args: ["/hello.txt", "/dacc.txt"] },
+        })
+
+        expect(stdout).toBe("Hello, World!\ndacc is awesome!\n")
+    })
 })

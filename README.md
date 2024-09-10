@@ -1,6 +1,6 @@
 # dacc: docker-as-code compiler
 
-### _Cache-efficient, sandboxed, builds as code._
+#### _Cache-efficient, sandboxed, builds as code._
 
 * <ins>Native</ins> support with any Docker installation, no extra tools needed
 * <ins>Infrastructure-as-code</ins> for docker images
@@ -19,13 +19,21 @@ npx create-dacc hello-dacc
 ```
 Enter the newly created directory and run the build
 ```
-cd hello-dacc && npm run build
+cd hello-dacc && npm start
 ```
 
-### Merging / Parallelism
+### Examples
+- [Merging / Parallism](#merging--parallelism)
+- [Diff Layers](./examples/src/diff.ts)
+- [Generating protobuf definitions for this repository](./packages/dacc/src/build/df.ts)
+- [Building the Buildkit Frontend Image](https://github.com/r2d4/llb/blob/main/build/src/main.ts)
+- [Multi-platform](./examples/src/multi-platform.ts)
+- [Nested builds](./examples/src/nested-builds.ts)
+
+## Merging / Parallelism
 Docker images often have to install packages via a package manager. This might be specified in a single command `RUN apk add git curl wget`. But when a new package is added, the entire cache is invalidated.
 
-Instead, with dacc, you can install them in parallel and then merge the resulting filesystems.
+Instead, with dacc, you can install them in parallel and then merge the resulting filesystems. Adding or removing packages from the list won't invalidate the cache for the other packages.
 
 ```typescript main.ts
 import { cacheMount, State } from 'dacc'
@@ -49,31 +57,3 @@ async function main() {
 
 void main()
 ```
-Running it for the first time takes 1.8s. 
-```
-[+] Building 1.8s (10/10) FINISHED  
-...
- => [from] alpine                                                                                                 0.0s
- => [run] apk add wget                                                                                            1.4s
- => [run] apk add curl                                                                                            1.0s
- => [run] apk add git                                                                                             1.0s
- => [merge] [run] apk add git, [run] apk add curl, [run] apk add wget                                             0.2s
- ...
- ```
- Now add another package to the list and re-run the build
- ```typescript
-const bins = ["git", "curl", "wget", "jq"]
-```
-
-```
-[+] Building 0.7s (11/11) FINISHED
-...
- => CACHED [from] alpine                                                                                          0.0s
- => [run] apk add jq                                                                                              0.4s
- => CACHED [run] apk add git                                                                                      0.0s
- => CACHED [run] apk add curl                                                                                     0.0s
- => CACHED [run] apk add wget                                                                                     0.0s
- => [merge] [run] apk add git, [run] apk add curl, [run] apk add wget, [run] apk add jq                           0.2s
- ...
- ```
-The original packages are still cached, and the build only downloads the new package.

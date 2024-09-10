@@ -342,7 +342,7 @@ export class State implements IState {
     }
 
     nested(other: State): State {
-        const def = Buffer.from(toBinary(DefinitionSchema, other.output().toDefinition())).toString('base64');
+        const def = toBinary(DefinitionSchema, other.output().toDefinition());
         const mnt = this.add(new StateNode([], mkFile(`/${LLBDefinitionFilename}`, def)))
         const parents = this.head ? [mnt.head!.id, this.head.id] : [mnt.head!.id];
         return this.add(new StateNode(parents, nested()))
@@ -429,7 +429,7 @@ export class State implements IState {
     script(script: string[] | string): State {
         if (typeof script === "string") script = [script];
         script = script.map(s => s.trim().replace(/\t/g, " "));
-        const mkFileOp = mkFile("/EOF", Buffer.from(script.join("\n")).toString("base64"));
+        const mkFileOp = mkFile("/EOF", script.join("\n"));
         const mkFileNode = new StateNode([], mkFileOp);
         this.add(mkFileNode, false);
         const runOp = run("/dev/pipes/EOF", this.metadata.env, "/");

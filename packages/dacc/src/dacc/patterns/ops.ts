@@ -155,12 +155,13 @@ export function workdir(path: string): BKNodeData {
     };
 }
 
-export function mkFile(path: string, data: string, description?: string): BKNodeData {
+export function mkFile(path: string, file: WithImplicitCoercion<Uint8Array | readonly number[] | string>, description?: string, input: number = -1): BKNodeData {
+    const data = Buffer.from(file).toString("base64");
     return {
         op: {
             file: {
                 actions: [{
-                    input: "-1",
+                    input: input.toString(),
                     secondaryInput: "-1",
                     mkfile: {
                         path,

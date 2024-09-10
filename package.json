@@ -1,7 +1,7 @@
 {
 	"name": "@dacc/workspace",
 	"author": "Matt Rickard <npm@matt-rickard.com>",
-	"version": "0.13.12",
+	"version": "0.13.13",
 	"private": true,
 	"scripts": {
 		"test": "jest",
