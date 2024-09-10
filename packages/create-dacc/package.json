@@ -1,6 +1,6 @@
 {
     "name": "create-dacc",
-    "version": "0.13.7",
+    "version": "0.13.8",
     "description": "A package to scaffold a dacc app environment with TypeScript",
     "main": "dist/index.js",
     "type": "module",
