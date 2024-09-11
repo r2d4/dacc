@@ -27,7 +27,7 @@ cd hello-dacc && npm start
 
 
 ## Examples
-- [Merging / Parallism](#merging--parallelism)
+- [Merging / Parallelism](#merging--parallelism)
 - [Diff Layers](./examples/src/diff.ts)
 - [Generating protobuf definitions for this repository](./packages/dacc/src/build/df.ts)
 - [Building the Buildkit Frontend Image](https://github.com/r2d4/llb/blob/main/build/src/main.ts)
