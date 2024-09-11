@@ -207,6 +207,23 @@ export interface IState {
     workdir(path: string): IState;
 
     /**
+     * Sets the command for the image.
+     * @param command 
+     */
+    cmd(command: string[]): IState;
+
+    /**
+     * Sets the entrypoint for the image.
+     * @param entrypoint 
+     */
+    entrypoint(entrypoint: string[]): IState;
+
+    /**
+     * Sets the author for the image.
+     */
+    author(author: string): IState;
+
+    /**
      * Adds a RUN instruction to the build graph.
      * @param command - The command to run.
      * @returns The current State instance.
