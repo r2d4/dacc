@@ -126,8 +126,8 @@ export class State implements IState {
         return this;
     }
 
-    labels(labels: Map<string, string>): IState {
-        labels.forEach((value, key) => this.metadata.labels.set(key, value));
+    label(kv: Record<string, string>): IState {
+        Object.entries(kv).forEach(([key, value]) => this.metadata.labels.set(key, value));
         return this;
     }
 
