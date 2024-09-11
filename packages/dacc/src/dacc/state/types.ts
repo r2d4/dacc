@@ -179,6 +179,12 @@ export interface IState {
     parallel(...ops: StateOp[]): StateNode[];
 
     /**
+     * Adds a new labels to the image configuration.
+     * @param kv - The key-value pairs to add as labels.
+     */
+    label(kv: Record<string, string>): IState;
+
+    /**
      * Creates a new branch in the build graph.
      * @param ref - The reference to branch from. If not provided, branches from the current head.
      * @returns The current State instance.

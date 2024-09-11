@@ -49,6 +49,11 @@ describe('dacc integration tests', () => {
         expect(stdout).toContain('GOLANG_VERSION');
     })
 
+    it('labels', async () => {
+        const base = await new State().from(baseImage)
+        base.label({ 'test': 'label' })
+    })
+
     it('workdir', async () => {
         const base = await new State().from(baseImage)
         const { stdout } = await base.workdir('/app').image.run({ run: { command: 'ls', args: ['/'] } });
