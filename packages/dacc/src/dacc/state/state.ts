@@ -63,21 +63,25 @@ export class State implements IState {
         };
     }
 
-    async from(identifier: string, platform?: PlatformJson): Promise<IState> {
+    async from(identifier: string, platform?: PlatformJson, opts?: {
+        skipPull?: boolean;
+    }): Promise<IState> {
         const ref = ImageReference.parse(identifier);
         if (!platform) platform = this.platform;
         const node = new StateNode([], from(ref, platform));
         this.platform = platform || this.platform;
-        await this.registry.getImageConfig(ref).then(ic => {
-            const icEnv = new Map<string, string>();
-            ic.config?.Env?.forEach(e => {
-                const [key, value] = e.split("=");
-                icEnv.set(key, value);
+        if (!opts?.skipPull) {
+            await this.registry.getImageConfig(ref).then(ic => {
+                const icEnv = new Map<string, string>();
+                ic.config?.Env?.forEach(e => {
+                    const [key, value] = e.split("=");
+                    icEnv.set(key, value);
+                })
+                this.metadata.env = icEnv;
+                this.metadata.command = ic.config?.Cmd;
+                this.metadata.entrypoint = ic.config?.Entrypoint;
             })
-            this.metadata.env = icEnv;
-            this.metadata.command = ic.config?.Cmd;
-            this.metadata.entrypoint = ic.config?.Entrypoint;
-        })
+        }
         this.add(node);
         return this;
     }

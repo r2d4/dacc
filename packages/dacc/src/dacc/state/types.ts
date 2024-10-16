@@ -163,7 +163,9 @@ export interface IState {
      * @param platform - The platform to use for the image. Defaults to the current platform.
      * @returns The current State instance.
      */
-    from(identifier: string, platform?: PlatformJson): Promise<IState>;
+    from(identifier: string, platform?: PlatformJson, opts?: {
+        skipPull?: boolean;
+    }): Promise<IState>;
 
     /**
     * Nests another State instance within the current one.
@@ -205,6 +207,23 @@ export interface IState {
      * @returns The current State instance.
      */
     workdir(path: string): IState;
+
+    /**
+     * Sets the command for the image.
+     * @param command 
+     */
+    cmd(command: string[]): IState;
+
+    /**
+     * Sets the entrypoint for the image.
+     * @param entrypoint 
+     */
+    entrypoint(entrypoint: string[]): IState;
+
+    /**
+     * Sets the author for the image.
+     */
+    author(author: string): IState;
 
     /**
      * Adds a RUN instruction to the build graph.

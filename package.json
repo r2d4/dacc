@@ -1,13 +1,12 @@
 {
 	"name": "@dacc/workspace",
 	"author": "Matt Rickard <npm@matt-rickard.com>",
-	"version": "0.13.15",
+	"version": "0.13.20",
 	"private": true,
 	"scripts": {
 		"test": "jest",
 		"build": "pnpm run -r build",
-		"bump": "pnpm run -r patch && git add . && git commit -m 'patch version temp' && pnpm version patch --no-git-tag-version && git reset --soft HEAD~2 && git add . && git commit -m $(pnpm pkg get version | tr -d '\"') && git tag $(pnpm pkg get version | tr -d '\"')",
-		"publish": "pnpm run -r publish"
+		"bump": "pnpm run -r patch && git add . && git commit -m 'patch version temp' && pnpm version patch --no-git-tag-version && git reset --soft HEAD~2 && git add . && git commit -m $(pnpm pkg get version | tr -d '\"') && git tag $(pnpm pkg get version | tr -d '\"')"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.25.2",

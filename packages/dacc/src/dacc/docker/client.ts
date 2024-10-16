@@ -159,7 +159,7 @@ export class DockerClient {
         const cmd: string[] = ['docker', 'buildx', 'build'];
 
         Object.entries(options).forEach(([key, value]) => {
-            if (value === undefined || key === 'contextPath' || key === 'ref') return;
+            if (value === undefined || key === 'contextPath' || key === 'ref' || key === 'node') return;
 
             const flag = `--${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`;
 
